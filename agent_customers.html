@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <title>شيت عملاء المندوب</title>
+
+    <style>
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background: linear-gradient(135deg, #2c3e50, #4ca1af);
+        color: #333;
+      }
+
+      h1 {
+        text-align: center;
+        color: #fff;
+        margin-bottom: 30px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        background: #fff;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+      }
+
+      th,
+      td {
+        padding: 14px;
+        text-align: center;
+        border-bottom: 1px solid #eee;
+      }
+
+      th {
+        background-color: #f8f9fa;
+        color: #333;
+      }
+
+      .status {
+        font-weight: bold;
+        padding: 8px 15px;
+        border-radius: 20px;
+        display: inline-block;
+      }
+
+      .paid {
+        background-color: #2ecc71;
+        color: #fff;
+      }
+
+      .unpaid {
+        background-color: #e74c3c;
+        color: #fff;
+      }
+
+      @media (max-width: 768px) {
+        table,
+        th,
+        td {
+          font-size: 13px;
+        }
+      }
+    </style>
+
+    <script type="module">
+      import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+      const supabase = createClient(
+        "https://vyhtsdqccyvygelekzey.supabase.co",
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5aHRzZHFjY3l2eWdlbGVremV5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk3NTQwOTMsImV4cCI6MjA2NTMzMDA5M30.bRjHD6OkziXjfavEX-tA-6IFdag7KoFBqLRgNLqwcdg"
+      );
+
+      window.onload = async function () {
+        const urlParams = new URLSearchParams(window.location.search);
+        const agent_id = urlParams.get("agent_id");
+
+        if (!agent_id) {
+          alert("لم يتم تحديد المندوب");
+          return;
+        }
+
+        await loadAgentInfo(agent_id);
+        await loadCustomers(agent_id);
+      };
+
+      async function loadAgentInfo(agent_id) {
+        const { data, error } = await supabase
+          .from("agents")
+          .select("name")
+          .eq("id", agent_id)
+          .single();
+
+        if (error || !data) {
+          alert("تعذر تحميل بيانات المندوب");
+          return;
+        }
+
+        document.getElementById(
+          "agentName"
+        ).innerText = `شيت العملاء: ${data.name}`;
+      }
+
+      async function loadCustomers(agent_id) {
+        try {
+          const { data, error } = await supabase
+            .from("customers_with_status")
+            .select("*")
+            .eq("agent_id", agent_id);
+
+          if (error) throw error;
+
+          const table = document.getElementById("customersTable");
+          let totalDueAmount = 0;
+
+          data.forEach((customer) => {
+            const statusClass =
+              customer.collection_status === "تم التحصيل" ? "paid" : "unpaid";
+
+            // نحسب فقط الفواتير التي لم يتم تحصيلها
+            if (customer.collection_status !== "تم التحصيل") {
+              totalDueAmount += customer.due_amount || 0;
+            }
+
+            const row = document.createElement("tr");
+            row.innerHTML = `
+          <td>${customer.name}</td>
+          <td>${customer.phone}</td>
+          <td>${customer.due_amount} ج.م</td>
+          <td><span class="status ${statusClass}">${customer.collection_status}</span></td>
+        `;
+            table.appendChild(row);
+          });
+
+          // نعرض المجموع أعلى الصفحة
+          document.getElementById(
+            "totalDue"
+          ).innerText = `إجمالي المبالغ المتبقية: ${totalDueAmount.toFixed(
+            2
+          )} ج.م`;
+        } catch (err) {
+          console.error("Customers Error:", err);
+          alert("خطأ أثناء تحميل العملاء");
+        }
+      }
+    </script>
+  </head>
+
+  <body>
+    <header
+      style="
+        background: linear-gradient(45deg, #2c3e50, #4ca1af);
+        padding: 15px 30px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        color: #fff;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        border-bottom-left-radius: 10px;
+        border-bottom-right-radius: 10px;
+      "
+    >
+      <div style="display: flex; align-items: center">
+        <img
+          src="./Orange_logo.svg.png"
+          alt="Logo"
+          style="height: 50px; margin-left: 15px; border-radius: 8px"
+        />
+        <h2 style="margin: 0">فوكس بيزنيس</h2>
+      </div>
+      <div style="font-size: 16px">نظام إدارة التحصيل</div>
+    </header>
+    <h1 id="agentName">جاري التحميل...</h1>
+    <h3
+      id="totalDue"
+      style="text-align: center; color: #fff; margin-top: -10px"
+    >
+      جاري حساب الإجمالي...
+    </h3>
+
+    <table>
+      <thead>
+        <tr>
+          <th>اسم العميل</th>
+          <th>رقم الهاتف</th>
+          <th>قيمة الفاتورة</th>
+          <th>حالة التحصيل</th>
+        </tr>
+      </thead>
+      <tbody id="customersTable"></tbody>
+    </table>
+    <!-- ✅ الفوتر -->
+
+    <footer
+      style="
+        background: #2c3e50;
+        color: #fff;
+        text-align: center;
+        padding: 15px;
+        font-size: 14px;
+        border-top-left-radius: 10px;
+        border-top-right-radius: 10px;
+        margin-top: 40px;
+      "
+    >
+      <div>جميع الحقوق محفوظة &copy; فوكس بيزنيس</div>
+      <div>مطور النظام: عبدالله هاني</div>
+      <div>خدمة العملاء: 01212555345</div>
+    </footer>
+  </body>
+</html>

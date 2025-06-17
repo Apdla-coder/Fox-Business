@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <title>لوحة تحكم المدير</title>
+    <style>
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background: linear-gradient(135deg, #2c3e50, #4ca1af);
+        color: #333;
+      }
+
+      h1,
+      h2 {
+        text-align: center;
+        color: #fff;
+        margin-bottom: 20px;
+      }
+      select,
+      input[type="file"] {
+        padding: 10px;
+        font-size: 14px;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        margin-bottom: 10px;
+        width: 250px;
+        max-width: 90%;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      }
+
+      button {
+        padding: 10px 20px;
+        background: #27ae60;
+        border: none;
+        color: white;
+        font-size: 14px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: 0.3s ease-in-out;
+        margin-top: 10px;
+      }
+
+      button:hover {
+        background: #219150;
+      }
+
+      #uploadStatus {
+        background: #ecf0f1;
+        color: #2c3e50;
+        padding: 10px 15px;
+        border-radius: 10px;
+        font-weight: bold;
+        max-width: 400px;
+        margin: 10px auto;
+        text-align: center;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+      }
+
+      .cards-container {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 20px;
+        margin-bottom: 40px;
+      }
+
+      .card {
+        background-color: #ffffff;
+        width: 200px;
+        padding: 20px;
+        border-radius: 15px;
+        text-align: center;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        font-size: 16px;
+      }
+
+      .card div {
+        font-size: 24px;
+        font-weight: bold;
+        margin-top: 10px;
+        color: #2c3e50;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        background: #fff;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+      }
+
+      th,
+      td {
+        padding: 14px;
+        text-align: center;
+        border-bottom: 1px solid #eee;
+      }
+
+      th {
+        background-color: #f8f9fa;
+        color: #333;
+      }
+
+      a {
+        color: #2980b9;
+        text-decoration: none;
+        font-weight: bold;
+      }
+
+      a:hover {
+        text-decoration: underline;
+      }
+
+      @media (max-width: 768px) {
+        .cards-container {
+          flex-direction: column;
+          align-items: center;
+        }
+        table,
+        th,
+        td {
+          font-size: 13px;
+        }
+      }
+    </style>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  </head>
+
+  <body>
+    <header
+      style="
+        background: linear-gradient(45deg, #2c3e50, #4ca1af);
+        padding: 15px 30px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        color: #fff;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        border-bottom-left-radius: 10px;
+        border-bottom-right-radius: 10px;
+      "
+    >
+      <div style="display: flex; align-items: center">
+        <img
+          src="./Orange_logo.svg.png"
+          alt="Logo"
+          style="height: 50px; margin-left: 15px; border-radius: 8px"
+        />
+        <h2 style="margin: 0">فوكس بيزنيس</h2>
+      </div>
+      <div style="font-size: 16px">نظام إدارة التحصيل</div>
+    </header>
+
+    <h1>لوحة تحكم المدير</h1>
+
+    <div class="cards-container">
+      <div class="card">
+        📄 <br />إجمالي الفواتير
+        <div id="total_invoices">0</div>
+      </div>
+      <div class="card">
+        💰 <br />المحصل اليوم
+        <div id="total_collected">0</div>
+      </div>
+      <div class="card">
+        🕒 <br />فواتير متأخرة
+        <div id="total_pending">0</div>
+      </div>
+      <div class="card">
+        📊 <br />نسبة الإنجاز
+        <div id="monthly_completion">0%</div>
+      </div>
+    </div>
+
+    <h2>أداء المناديب اليوم</h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>اسم المندوب</th>
+          <th>عدد الفواتير اليوم</th>
+          <th>المبلغ المحصل اليوم</th>
+          <th>المبلغ المتبقي</th>
+          <th>حالة اليوم</th>
+          <th>آخر تسجيل دخول</th>
+        </tr>
+      </thead>
+      <tbody id="agentsTable"></tbody>
+    </table>
+
+    <h2>رفع بيانات العملاء</h2>
+    <label for="agentSelect">اختر المندوب:</label>
+    <select
+      id="agentSelect"
+      style="margin: 10px 0; padding: 5px; border-radius: 5px"
+    >
+      <option value="">-- اختر --</option>
+    </select>
+    <br />
+    <input type="file" id="excelFile" />
+    <button onclick="uploadExcel()">📤 رفع بيانات العملاء</button>
+    <div id="uploadStatus" style="margin-top: 10px"></div>
+    <!-- الفوتر -->
+    <footer
+      style="
+        background: #2c3e50;
+        color: #fff;
+        text-align: center;
+        padding: 15px;
+        font-size: 14px;
+        border-top-left-radius: 10px;
+        border-top-right-radius: 10px;
+        margin-top: 40px;
+      "
+    >
+      <div>جميع الحقوق محفوظة &copy; فوكس بيزنيس</div>
+      <div>مطور النظام: عبدالله هاني</div>
+      <div>خدمة العملاء: 01212555345</div>
+    </footer>
+
+    <!-- سكريبت النظام -->
+    <script type="module">
+      import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+      import * as XLSX from "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/+esm";
+
+      const supabase = createClient(
+        "https://vyhtsdqccyvygelekzey.supabase.co",
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5aHRzZHFjY3l2eWdlbGVremV5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk3NTQwOTMsImV4cCI6MjA2NTMzMDA5M30.bRjHD6OkziXjfavEX-tA-6IFdag7KoFBqLRgNLqwcdg"
+      );
+
+      window.onload = async () => {
+        await loadSummary();
+        await loadAgents();
+        await loadUploadAgents();
+      };
+
+      // ✅ تحميل ملخص اليوم
+      async function loadSummary() {
+        try {
+          const { data, error } = await supabase
+            .from("daily_summary")
+            .select("*")
+            .limit(1)
+            .maybeSingle();
+
+          if (error || !data) {
+            console.warn("No summary data found", error);
+            return;
+          }
+
+          document.getElementById("total_invoices").innerText =
+            data.total_invoices;
+          document.getElementById("total_collected").innerText =
+            data.total_collected;
+          document.getElementById("total_pending").innerText =
+            data.total_pending_invoices;
+          document.getElementById("monthly_completion").innerText =
+            data.monthly_completion + "%";
+        } catch (err) {
+          console.error("Error loading summary:", err);
+        }
+      }
+
+      async function loadAgents() {
+        try {
+          const { data: agents, error } = await supabase
+            .from("agents_summary")
+            .select("*");
+          if (error) throw error;
+
+          const table = document.getElementById("agentsTable");
+
+          for (const agent of agents) {
+            // 🟡 نحسب المبلغ المتبقي من customers_with_status
+            let totalDue = 0;
+            try {
+              const { data: customers, error: custError } = await supabase
+                .from("customers_with_status")
+                .select("due_amount, collection_status")
+                .eq("agent_id", agent.agent_id);
+
+              if (custError) throw custError;
+
+              // نحسب فقط الفواتير الغير محصلة
+              customers.forEach((customer) => {
+                if (customer.collection_status !== "تم التحصيل") {
+                  totalDue += customer.due_amount || 0;
+                }
+              });
+            } catch (err) {
+              console.warn(
+                `⚠️ خطأ في حساب المبلغ المتبقي للمندوب ${agent.agent_name}:`,
+                err
+              );
+              totalDue = 0;
+            }
+
+            const lastLogin = agent.last_login
+              ? new Date(agent.last_login).toLocaleString()
+              : "لم يسجل بعد";
+
+            const row = document.createElement("tr");
+            row.innerHTML = `
+        <td><a href="agent_customers.html?agent_id=${agent.agent_id}">
+          ${agent.agent_name}</a>
+        </td>
+        <td>${agent.collected_invoices_today}</td>
+        <td>${agent.collected_amount_today} ج.م</td>
+        <td>${totalDue.toFixed(2)} ج.م</td>
+        <td>${agent.collected_invoices_today > 0 ? "✅" : "⏳"}</td>
+        <td>${lastLogin}</td>
+      `;
+            table.appendChild(row);
+          }
+        } catch (err) {
+          console.error("Agents Error:", err);
+          alert("خطأ أثناء تحميل بيانات المناديب");
+        }
+      }
+
+      // ✅ تحميل أسماء المناديب لقائمة رفع العملاء
+      async function loadUploadAgents() {
+        try {
+          const { data, error } = await supabase
+            .from("agents")
+            .select("id,name");
+          if (error) throw error;
+
+          const select = document.getElementById("agentSelect");
+          data.forEach((agent) => {
+            const option = document.createElement("option");
+            option.value = agent.id;
+            option.textContent = agent.name;
+            select.appendChild(option);
+          });
+        } catch (err) {
+          console.error("Error loading agents for upload", err);
+        }
+      }
+
+      // ✅ رفع بيانات العملاء من إكسل
+      window.uploadExcel = async () => {
+        const fileInput = document.getElementById("excelFile");
+        const status = document.getElementById("uploadStatus");
+        const agent_id = document.getElementById("agentSelect").value;
+
+        if (!agent_id) return setStatus("⚠️ اختر المندوب أولاً.", "red");
+        if (!fileInput.files.length)
+          return setStatus("📄 اختر ملف أولاً.", "red");
+
+        try {
+          const file = fileInput.files[0];
+          const data = new Uint8Array(await file.arrayBuffer());
+          const workbook = XLSX.read(data, { type: "array" });
+          const sheet = workbook.Sheets[workbook.SheetNames[0]];
+          const rows = XLSX.utils.sheet_to_json(sheet);
+
+          if (!rows.length)
+            return setStatus("❌ الملف فارغ أو التنسيق غير صحيح.", "red");
+
+          const preparedRows = rows.map((row) => ({
+            name: row.name?.toString().trim() || null,
+            phone: row.phone?.toString().trim() || null,
+            address: row.address?.toString().trim() || null,
+            due_amount: Number(row.due_amount) || 0,
+            agent_id,
+          }));
+
+          const { error } = await supabase
+            .from("customers")
+            .insert(preparedRows);
+          if (error)
+            return setStatus("❌ فشل رفع البيانات: " + error.message, "red");
+
+          setStatus("✅ تم رفع البيانات بنجاح.", "green");
+          fileInput.value = "";
+        } catch (err) {
+          console.error("Upload error:", err);
+          setStatus("⚠️ حدث خطأ أثناء المعالجة.", "red");
+        }
+      };
+    </script>
+  </body>
+</html>

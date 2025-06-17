@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <title>تحصيل العملاء</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #2c3e50, #4ca1af);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      h1 {
+        color: #fff;
+        margin: 30px 0 20px;
+      }
+
+      .table-container {
+        background: #ffffff;
+        padding: 20px;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        width: 90%;
+        max-width: 1000px;
+        overflow-x: auto;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      th,
+      td {
+        padding: 15px 10px;
+        text-align: center;
+        border-bottom: 1px solid #ddd;
+        font-size: 15px;
+      }
+
+      th {
+        background-color: #f0f0f0;
+        color: #333;
+      }
+
+      button {
+        padding: 8px 16px;
+        background: #27ae60;
+        border: none;
+        color: white;
+        border-radius: 8px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: 0.3s;
+      }
+
+      button:hover {
+        background: #1e8449;
+      }
+    </style>
+
+    <script type="module">
+      import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+      const supabase = createClient(
+        "https://vyhtsdqccyvygelekzey.supabase.co",
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5aHRzZHFjY3l2eWdlbGVremV5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk3NTQwOTMsImV4cCI6MjA2NTMzMDA5M30.bRjHD6OkziXjfavEX-tA-6IFdag7KoFBqLRgNLqwcdg"
+      );
+
+      window.onload = async function () {
+        const agent_id = localStorage.getItem("agent_id");
+
+        // 1️⃣ تحميل العملاء من الـ function
+        const { data, error } = await supabase.rpc("get_customers_to_collect", {
+          p_agent_id: agent_id,
+        });
+
+        if (error) {
+          console.error(error);
+          alert("حدث خطأ أثناء تحميل العملاء");
+          return;
+        }
+
+        const table = document.getElementById("customersTable");
+        let totalDue = 0;
+
+        data.forEach((customer) => {
+          totalDue += customer.due_amount || 0;
+
+          const row = document.createElement("tr");
+          row.id = `row_${customer.id}`;
+          row.innerHTML = `
+      <td>${customer.name}</td>
+      <td>${customer.phone}</td>
+      <td>${customer.address}</td>
+      <td>${customer.due_amount} ج.م</td>
+      <td>
+        <button onclick="collect('${customer.id}', ${customer.due_amount})">تحصيل</button>
+      </td>
+    `;
+          table.appendChild(row);
+        });
+
+        // ✅ عرض المبلغ المتبقي
+        document.getElementById(
+          "totalDue"
+        ).innerText = `المبلغ المتبقي: ${totalDue.toFixed(2)} ج.م`;
+
+        // 2️⃣ تحميل المبلغ المحصل من جدول collections
+        const { data: collections, error: collectedError } = await supabase
+          .from("collections")
+          .select("amount")
+          .eq("collected_by", agent_id);
+
+        if (collectedError) {
+          console.error(collectedError);
+          alert("حدث خطأ أثناء تحميل المبالغ المحصلة");
+          return;
+        }
+
+        let collectedAmount = 0;
+        collections.forEach((c) => {
+          collectedAmount += c.amount || 0;
+        });
+
+        // ✅ عرض المبلغ المحصل
+        document.getElementById(
+          "collectedAmount"
+        ).innerText = `المبلغ المحصل: ${collectedAmount.toFixed(2)} ج.م`;
+      };
+
+      window.collect = async function (customer_id, due_amount) {
+        const collected_by = localStorage.getItem("agent_id");
+
+        const { error } = await supabase
+          .from("collections")
+          .insert([{ customer_id, amount: due_amount, collected_by }]);
+
+        if (error) {
+          console.error(error);
+          alert("حدث خطأ أثناء التحصيل");
+        } else {
+          alert("✅ تم التحصيل بنجاح");
+          document.getElementById(`row_${customer_id}`).remove();
+        }
+      };
+    </script>
+  </head>
+
+  <body>
+    <header
+      style="
+        background: linear-gradient(45deg, #2c3e50, #4ca1af);
+        padding: 15px 30px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        color: #fff;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        border-bottom-left-radius: 10px;
+        border-bottom-right-radius: 10px;
+      "
+    >
+      <div style="display: flex; align-items: center">
+        <img
+          src="./Orange_logo.svg.png"
+          alt="Logo"
+          style="height: 50px; margin-left: 15px; border-radius: 8px"
+        />
+        <h2 style="margin: 0">فوكس بيزنيس</h2>
+      </div>
+      <div style="font-size: 16px">نظام إدارة التحصيل</div>
+    </header>
+    <h1>العملاء المطلوب تحصيلهم</h1>
+    <h3 id="totalDue" style="text-align: center; color: #fff">
+      المبلغ المتبقي: ...
+    </h3>
+    <h3 id="collectedAmount" style="text-align: center; color: #fff">
+      المبلغ المحصل: 0.00 ج.م
+    </h3>
+
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>الاسم</th>
+            <th>الموبايل</th>
+            <th>العنوان</th>
+            <th>المبلغ المستحق</th>
+            <th>تحصيل</th>
+          </tr>
+        </thead>
+        <tbody id="customersTable"></tbody>
+      </table>
+    </div>
+    <!-- ✅ الفوتر -->
+    <footer
+      style="
+        background: #2c3e50;
+        color: #fff;
+        text-align: center;
+        padding: 15px;
+        font-size: 14px;
+        border-top-left-radius: 10px;
+        border-top-right-radius: 10px;
+        margin-top: 40px;
+      "
+    >
+      <div>جميع الحقوق محفوظة &copy; فوكس بيزنيس</div>
+      <div>مطور النظام: عبدالله هاني</div>
+      <div>خدمة العملاء: 01212555345</div>
+    </footer>
+  </body>
+</html>
