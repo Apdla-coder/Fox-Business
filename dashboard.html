@@ -193,6 +193,7 @@
       <tbody id="agentsTable"></tbody>
     </table>
 
+    <!-- ✅ HTML الأزرار -->
     <h2>رفع بيانات العملاء</h2>
     <label for="agentSelect">اختر المندوب:</label>
     <select
@@ -203,8 +204,29 @@
     </select>
     <br />
     <input type="file" id="excelFile" />
-    <button onclick="uploadExcel()">📤 رفع بيانات العملاء</button>
+    <button id="uploadButton">📤 رفع البيانات</button>
     <div id="uploadStatus" style="margin-top: 10px"></div>
+    <div
+      id="uploadLoader"
+      style="display: none; text-align: center; margin-top: 10px"
+    >
+      <span
+        style="
+          padding: 10px 20px;
+          background: #eee;
+          border-radius: 8px;
+          font-weight: bold;
+          color: #333;
+        "
+      >
+        ⏳ جاري رفع البيانات...
+      </span>
+    </div>
+
+    <h2>حذف كل البيانات</h2>
+    <button id="clearButton">🧨 حذف جميع البيانات</button>
+    <div id="clearStatus" style="font-weight: bold; margin: 10px 0"></div>
+
     <!-- الفوتر -->
     <footer
       style="
@@ -223,36 +245,46 @@
       <div>خدمة العملاء: 01212555345</div>
     </footer>
 
-    <!-- سكريبت النظام -->
+    <!-- ✅ JavaScript النهائي -->
+
     <script type="module">
+      // ✅ 1. استدعاء المكتبات المطلوبة
       import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
       import * as XLSX from "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/+esm";
 
+      // ✅ 2. تهيئة الاتصال بـ Supabase
       const supabase = createClient(
         "https://vyhtsdqccyvygelekzey.supabase.co",
         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5aHRzZHFjY3l2eWdlbGVremV5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk3NTQwOTMsImV4cCI6MjA2NTMzMDA5M30.bRjHD6OkziXjfavEX-tA-6IFdag7KoFBqLRgNLqwcdg"
       );
 
+      // ✅ 3. تنفيذ المهام بعد تحميل الصفحة
       window.onload = async () => {
         await loadSummary();
         await loadAgents();
         await loadUploadAgents();
+
+        // ✅ ربط الأزرار
+        document
+          .getElementById("uploadButton")
+          ?.addEventListener("click", uploadExcel);
+        document
+          .getElementById("deleteButton")
+          ?.addEventListener("click", deleteCollectedLastMonth);
+        document
+          .getElementById("clearButton")
+          ?.addEventListener("click", clearAllData);
       };
 
-      // ✅ تحميل ملخص اليوم
+      // ✅ 4. تحميل ملخص الأداء من جدول daily_summary
       async function loadSummary() {
         try {
-          const { data, error } = await supabase
+          const { data } = await supabase
             .from("daily_summary")
             .select("*")
             .limit(1)
             .maybeSingle();
-
-          if (error || !data) {
-            console.warn("No summary data found", error);
-            return;
-          }
-
+          if (!data) return;
           document.getElementById("total_invoices").innerText =
             data.total_invoices;
           document.getElementById("total_collected").innerText =
@@ -266,87 +298,63 @@
         }
       }
 
+      // ✅ 5. تحميل أداء المناديب
       async function loadAgents() {
         try {
-          const { data: agents, error } = await supabase
+          const { data: agents } = await supabase
             .from("agents_summary")
             .select("*");
-          if (error) throw error;
-
           const table = document.getElementById("agentsTable");
-
           for (const agent of agents) {
-            // 🟡 نحسب المبلغ المتبقي من customers_with_status
             let totalDue = 0;
-            try {
-              const { data: customers, error: custError } = await supabase
-                .from("customers_with_status")
-                .select("due_amount, collection_status")
-                .eq("agent_id", agent.agent_id);
-
-              if (custError) throw custError;
-
-              // نحسب فقط الفواتير الغير محصلة
-              customers.forEach((customer) => {
-                if (customer.collection_status !== "تم التحصيل") {
-                  totalDue += customer.due_amount || 0;
-                }
-              });
-            } catch (err) {
-              console.warn(
-                `⚠️ خطأ في حساب المبلغ المتبقي للمندوب ${agent.agent_name}:`,
-                err
-              );
-              totalDue = 0;
-            }
-
-            const lastLogin = agent.last_login
-              ? new Date(agent.last_login).toLocaleString()
-              : "لم يسجل بعد";
+            const { data: customers } = await supabase
+              .from("customers_with_status")
+              .select("due_amount, collection_status")
+              .eq("agent_id", agent.agent_id);
+            customers.forEach((c) => {
+              if (c.collection_status !== "تم التحصيل")
+                totalDue += c.due_amount || 0;
+            });
 
             const row = document.createElement("tr");
             row.innerHTML = `
-        <td><a href="agent_customers.html?agent_id=${agent.agent_id}">
-          ${agent.agent_name}</a>
-        </td>
-        <td>${agent.collected_invoices_today}</td>
-        <td>${agent.collected_amount_today} ج.م</td>
-        <td>${totalDue.toFixed(2)} ج.م</td>
-        <td>${agent.collected_invoices_today > 0 ? "✅" : "⏳"}</td>
-        <td>${lastLogin}</td>
-      `;
+          <td><a href="agent_customers.html?agent_id=${agent.agent_id}">${
+              agent.agent_name
+            }</a></td>
+          <td>${agent.collected_invoices_today}</td>
+          <td>${agent.collected_amount_today} ج.م</td>
+          <td>${totalDue.toFixed(2)} ج.م</td>
+          <td>${agent.collected_invoices_today > 0 ? "✅" : "⏳"}</td>
+          <td>${
+            agent.last_login
+              ? new Date(agent.last_login).toLocaleString()
+              : "لم يسجل بعد"
+          }</td>
+        `;
             table.appendChild(row);
           }
         } catch (err) {
-          console.error("Agents Error:", err);
-          alert("خطأ أثناء تحميل بيانات المناديب");
+          console.error("Error loading agents:", err);
         }
       }
 
-      // ✅ تحميل أسماء المناديب لقائمة رفع العملاء
+      // ✅ 6. تحميل قائمة المناديب لرفع البيانات
       async function loadUploadAgents() {
-        try {
-          const { data, error } = await supabase
-            .from("agents")
-            .select("id,name");
-          if (error) throw error;
-
-          const select = document.getElementById("agentSelect");
-          data.forEach((agent) => {
-            const option = document.createElement("option");
-            option.value = agent.id;
-            option.textContent = agent.name;
-            select.appendChild(option);
-          });
-        } catch (err) {
-          console.error("Error loading agents for upload", err);
-        }
+        const { data } = await supabase.from("agents").select("id,name");
+        const select = document.getElementById("agentSelect");
+        data.forEach((agent) => {
+          const opt = document.createElement("option");
+          opt.value = agent.id;
+          opt.textContent = agent.name;
+          select.appendChild(opt);
+        });
       }
 
-      // ✅ رفع بيانات العملاء من إكسل
-      window.uploadExcel = async () => {
+      // ✅ 7. رفع ملف Excel وتحديث قاعدة البيانات
+      async function uploadExcel() {
         const fileInput = document.getElementById("excelFile");
         const status = document.getElementById("uploadStatus");
+        const loader = document.getElementById("uploadLoader");
         const agent_id = document.getElementById("agentSelect").value;
 
         if (!agent_id) return setStatus("⚠️ اختر المندوب أولاً.", "red");
@@ -354,6 +362,9 @@
           return setStatus("📄 اختر ملف أولاً.", "red");
 
         try {
+          loader.style.display = "block";
+          setStatus("", "");
+
           const file = fileInput.files[0];
           const data = new Uint8Array(await file.arrayBuffer());
           const workbook = XLSX.read(data, { type: "array" });
@@ -363,27 +374,123 @@
           if (!rows.length)
             return setStatus("❌ الملف فارغ أو التنسيق غير صحيح.", "red");
 
-          const preparedRows = rows.map((row) => ({
-            name: row.name?.toString().trim() || null,
-            phone: row.phone?.toString().trim() || null,
-            address: row.address?.toString().trim() || null,
-            due_amount: Number(row.due_amount) || 0,
-            agent_id,
-          }));
+          const currentMonth = new Date().toISOString().slice(0, 7);
+          const newCustomers = [];
+          const updates = [];
 
-          const { error } = await supabase
-            .from("customers")
-            .insert(preparedRows);
-          if (error)
-            return setStatus("❌ فشل رفع البيانات: " + error.message, "red");
+          for (const row of rows) {
+            const phone = row.phone?.toString().trim();
+            const due_amount = Number(row.due_amount) || 0;
+            const name = row.name?.toString().trim() || null;
+            const address = row.address?.toString().trim() || null;
+            const section = row.section?.toString().trim() || null; // ✅ دعم القسم
 
-          setStatus("✅ تم رفع البيانات بنجاح.", "green");
+            if (!phone || due_amount <= 0) continue;
+
+            // ✅ فحص وجود العميل مسبقًا
+            const { data: existing, error: fetchError } = await supabase
+              .from("customers")
+              .select("*")
+              .eq("phone", phone)
+              .eq("agent_id", agent_id)
+              .order("created_at", { ascending: false })
+              .limit(1)
+              .maybeSingle();
+
+            if (fetchError) {
+              console.warn("⚠️ خطأ في جلب العميل:", fetchError.message);
+              continue;
+            }
+
+            if (existing) {
+              if (existing.collection_status === "تم التحصيل") {
+                newCustomers.push({
+                  name,
+                  phone,
+                  address,
+                  due_amount,
+                  agent_id,
+                  section,
+                  billing_month: currentMonth,
+                  collection_status: "لم يتم التحصيل",
+                });
+              } else {
+                updates.push({
+                  id: existing.id,
+                  due_amount: (existing.due_amount || 0) + due_amount,
+                  billing_month: currentMonth,
+                });
+              }
+            } else {
+              newCustomers.push({
+                name,
+                phone,
+                address,
+                due_amount,
+                agent_id,
+                section,
+                billing_month: currentMonth,
+                collection_status: "لم يتم التحصيل",
+              });
+            }
+          }
+
+          // ✅ إدخال عملاء جدد
+          if (newCustomers.length > 0) {
+            const { error: insertError } = await supabase
+              .from("customers")
+              .insert(newCustomers);
+            if (insertError) {
+              console.error("❌ خطأ أثناء الإدخال:", insertError.message);
+              return setStatus("❌ فشل إدخال البيانات الجديدة.", "red");
+            }
+          }
+
+          // ✅ تحديث العملاء الحاليين
+          for (const u of updates) {
+            const { error: updateError } = await supabase
+              .from("customers")
+              .update({
+                due_amount: u.due_amount,
+                billing_month: u.billing_month,
+              })
+              .eq("id", u.id);
+            if (updateError) {
+              console.error(
+                `❌ فشل تحديث العميل ${u.id}:`,
+                updateError.message
+              );
+            }
+          }
+
+          setStatus("✅ تم رفع وتحديث البيانات بنجاح.", "green");
           fileInput.value = "";
         } catch (err) {
-          console.error("Upload error:", err);
-          setStatus("⚠️ حدث خطأ أثناء المعالجة.", "red");
+          console.error("❌ حدث خطأ:", err.message);
+          setStatus("❌ حدث خطأ غير متوقع.", "red");
+        } finally {
+          loader.style.display = "none";
         }
-      };
+      }
+
+      // ✅ 9. حذف كل البيانات
+      async function clearAllData() {
+        const status = document.getElementById("clearStatus");
+        if (!confirm("⚠️ هل أنت متأكد أنك تريد حذف جميع البيانات؟")) return;
+
+        await supabase.from("collections").delete().not("id", "is", null);
+        await supabase.from("customers").delete().not("id", "is", null);
+
+        status.innerText = "✅ تم حذف جميع البيانات بنجاح.";
+        status.style.color = "green";
+      }
+
+      // ✅ 10. تحديث حالة التنبيه
+      function setStatus(msg, color) {
+        const el = document.getElementById("uploadStatus");
+        el.innerText = msg;
+        el.style.color = color;
+      }
     </script>
   </body>
 </html>

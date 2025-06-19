@@ -8,14 +8,13 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "./icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png"
+      "src": "./Orange_logo.svg.png",
+      "sizes": "192x192"
     },
     {
-      "src": "./icon-512.png",
+      "src": "./Orange_logo.svg.png",
       "sizes": "512x512",
-      "type": "./Orange_logo.svg.png"
+      "type": "image/png"
     }
   ]
 }

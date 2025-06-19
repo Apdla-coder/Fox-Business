@@ -63,93 +63,6 @@
         background: #1e8449;
       }
     </style>
-
-    <script type="module">
-      import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
-
-      const supabase = createClient(
-        "https://vyhtsdqccyvygelekzey.supabase.co",
-        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5aHRzZHFjY3l2eWdlbGVremV5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk3NTQwOTMsImV4cCI6MjA2NTMzMDA5M30.bRjHD6OkziXjfavEX-tA-6IFdag7KoFBqLRgNLqwcdg"
-      );
-
-      window.onload = async function () {
-        const agent_id = localStorage.getItem("agent_id");
-
-        // 1️⃣ تحميل العملاء من الـ function
-        const { data, error } = await supabase.rpc("get_customers_to_collect", {
-          p_agent_id: agent_id,
-        });
-
-        if (error) {
-          console.error(error);
-          alert("حدث خطأ أثناء تحميل العملاء");
-          return;
-        }
-
-        const table = document.getElementById("customersTable");
-        let totalDue = 0;
-
-        data.forEach((customer) => {
-          totalDue += customer.due_amount || 0;
-
-          const row = document.createElement("tr");
-          row.id = `row_${customer.id}`;
-          row.innerHTML = `
-      <td>${customer.name}</td>
-      <td>${customer.phone}</td>
-      <td>${customer.address}</td>
-      <td>${customer.due_amount} ج.م</td>
-      <td>
-        <button onclick="collect('${customer.id}', ${customer.due_amount})">تحصيل</button>
-      </td>
-    `;
-          table.appendChild(row);
-        });
-
-        // ✅ عرض المبلغ المتبقي
-        document.getElementById(
-          "totalDue"
-        ).innerText = `المبلغ المتبقي: ${totalDue.toFixed(2)} ج.م`;
-
-        // 2️⃣ تحميل المبلغ المحصل من جدول collections
-        const { data: collections, error: collectedError } = await supabase
-          .from("collections")
-          .select("amount")
-          .eq("collected_by", agent_id);
-
-        if (collectedError) {
-          console.error(collectedError);
-          alert("حدث خطأ أثناء تحميل المبالغ المحصلة");
-          return;
-        }
-
-        let collectedAmount = 0;
-        collections.forEach((c) => {
-          collectedAmount += c.amount || 0;
-        });
-
-        // ✅ عرض المبلغ المحصل
-        document.getElementById(
-          "collectedAmount"
-        ).innerText = `المبلغ المحصل: ${collectedAmount.toFixed(2)} ج.م`;
-      };
-
-      window.collect = async function (customer_id, due_amount) {
-        const collected_by = localStorage.getItem("agent_id");
-
-        const { error } = await supabase
-          .from("collections")
-          .insert([{ customer_id, amount: due_amount, collected_by }]);
-
-        if (error) {
-          console.error(error);
-          alert("حدث خطأ أثناء التحصيل");
-        } else {
-          alert("✅ تم التحصيل بنجاح");
-          document.getElementById(`row_${customer_id}`).remove();
-        }
-      };
-    </script>
   </head>
 
   <body>
@@ -183,6 +96,18 @@
     <h3 id="collectedAmount" style="text-align: center; color: #fff">
       المبلغ المحصل: 0.00 ج.م
     </h3>
+    <input
+      type="text"
+      id="searchPhone"
+      placeholder="اكتب رقم العميل"
+      style="
+        padding: 10px;
+        width: 250px;
+        margin-bottom: 15px;
+        border-radius: 8px;
+      "
+    />
+    <button onclick="searchCustomer()">🔍 بحث</button>
 
     <div class="table-container">
       <table>
@@ -215,5 +140,256 @@
       <div>مطور النظام: عبدالله هاني</div>
       <div>خدمة العملاء: 01212555345</div>
     </footer>
+    <!-- أضف قبل نهاية </body> مباشرةً -->
+
+    <style>
+      .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.3);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+      }
+
+      .spinner {
+        border: 6px solid #f3f3f3;
+        border-top: 6px solid #27ae60;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+
+    <div class="loading-overlay" id="loadingOverlay">
+      <div class="spinner"></div>
+    </div>
+
+    <script type="module">
+      // ✅ 1. استدعاء مكتبة Supabase
+      import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+      // ✅ 2. إنشاء الاتصال بـ Supabase
+      const supabase = createClient(
+        "https://vyhtsdqccyvygelekzey.supabase.co",
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5aHRzZHFjY3l2eWdlbGVremV5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk3NTQwOTMsImV4cCI6MjA2NTMzMDA5M30.bRjHD6OkziXjfavEX-tA-6IFdag7KoFBqLRgNLqwcdg"
+      );
+
+      // ✅ 3. تحميل بيانات العملاء عند تحميل الصفحة
+      window.onload = async function () {
+        const agent_id = localStorage.getItem("agent_id");
+        const table = document.getElementById("customersTable");
+        const loading = document.getElementById("loadingOverlay");
+
+        try {
+          // ✅ عرض شريط التحميل
+          loading.style.display = "flex";
+
+          // ✅ جلب العملاء غير المحصلين للمندوب
+          const { data, error } = await supabase
+            .from("customers")
+            .select("*")
+            .eq("agent_id", agent_id)
+            .eq("collection_status", "لم يتم التحصيل")
+            .order("section", { ascending: true }) // ترتيب حسب القسم
+            .order("created_at", { ascending: true });
+
+          if (error) throw error;
+
+          let totalDue = 0;
+          let lastSection = null;
+
+          // ✅ 4. عرض العملاء في الجدول مع فواصل الأقسام
+          data.forEach((customer) => {
+            totalDue += customer.due_amount || 0;
+
+            // ✅ إذا تغير القسم، أضف صف فاصل
+            if (customer.section !== lastSection) {
+              const sectionRow = document.createElement("tr");
+              sectionRow.innerHTML = `
+            <td colspan="5" style="background: #eee; font-weight: bold; text-align: right; padding: 10px;">
+              📌 القسم: ${customer.section || "غير محدد"}
+            </td>
+          `;
+              table.appendChild(sectionRow);
+              lastSection = customer.section;
+            }
+
+            // ✅ صف بيانات العميل
+            const row = document.createElement("tr");
+            row.id = `row_${customer.id}`;
+            row.innerHTML = `
+  <td>${customer.name}</td>
+  <td>${customer.phone}</td>
+  <td>${customer.address || ""}</td>
+  <td>${customer.due_amount} ج.م</td>
+  <td>
+    <button id="btn_${customer.id}" onclick="collect('${customer.id}', ${
+              customer.due_amount
+            })">
+      تحصيل
+    </button>
+  </td>
+  <td>
+    <textarea id="note_${
+      customer.id
+    }" placeholder="اكتب الملاحظة هنا..." style="width: 150px; height: 40px;"></textarea>
+    <br />
+<button onclick="saveNote('${customer.id}', '${customer.name}', '${
+              customer.phone
+            }')">💬 حفظ</button>
+  </td>
+`;
+            table.appendChild(row);
+          });
+
+          // ✅ عرض إجمالي المبالغ المتبقية
+          document.getElementById(
+            "totalDue"
+          ).innerText = `المبلغ المتبقي: ${totalDue.toFixed(2)} ج.م`;
+
+          // ✅ تحميل المبالغ المحصلة
+          const { data: collections, error: collectedError } = await supabase
+            .from("collections")
+            .select("amount")
+            .eq("collected_by", agent_id);
+
+          if (collectedError) throw collectedError;
+
+          let collectedAmount = 0;
+          collections.forEach((c) => {
+            collectedAmount += c.amount || 0;
+          });
+
+          // ✅ عرض المبلغ المحصل
+          document.getElementById(
+            "collectedAmount"
+          ).innerText = `المبلغ المحصل: ${collectedAmount.toFixed(2)} ج.م`;
+        } catch (err) {
+          console.error(err);
+          alert("⚠️ حدث خطأ أثناء تحميل البيانات");
+        } finally {
+          // ✅ إخفاء اللودينج
+          loading.style.display = "none";
+        }
+      };
+
+      // ✅ 5. عملية التحصيل
+      window.collect = async function (customer_id, due_amount) {
+        const btn = document.getElementById(`btn_${customer_id}`);
+        const collected_by = localStorage.getItem("agent_id");
+        const loading = document.getElementById("loadingOverlay");
+
+        const confirmCollect = confirm("هل تريد تأكيد التحصيل؟");
+        if (!confirmCollect) return;
+
+        btn.disabled = true;
+        btn.innerText = "جاري التحصيل...";
+
+        try {
+          loading.style.display = "flex";
+
+          // ✅ 1. إضافة سجل إلى جدول التحصيل
+          const { error: insertError } = await supabase
+            .from("collections")
+            .insert([{ customer_id, amount: due_amount, collected_by }]);
+
+          if (insertError) throw insertError;
+
+          // ✅ 2. تحديث حالة العميل إلى "تم التحصيل"
+          const { error: updateError } = await supabase
+            .from("customers")
+            .update({ collection_status: "تم التحصيل" })
+            .eq("id", customer_id);
+
+          if (updateError) throw updateError;
+
+          // ✅ 3. إزالة العميل من الجدول
+          document.getElementById(`row_${customer_id}`).remove();
+          alert("✅ تم التحصيل بنجاح");
+        } catch (err) {
+          console.error(err);
+          alert("❌ حدث خطأ أثناء عملية التحصيل");
+          btn.disabled = false;
+          btn.innerText = "تحصيل";
+        } finally {
+          loading.style.display = "none";
+        }
+      };
+
+      window.saveNote = async function (
+        customer_id,
+        customer_name,
+        customer_phone
+      ) {
+        const agent_id = localStorage.getItem("agent_id");
+        const noteInput = document.getElementById(`note_${customer_id}`);
+        const note_text = noteInput.value.trim();
+
+        if (!note_text) {
+          alert("⚠️ اكتب ملاحظة أولاً");
+          return;
+        }
+
+        const { error } = await supabase.from("agent_notes").upsert(
+          [
+            {
+              agent_id,
+              customer_phone,
+              customer_name,
+              note_text,
+            },
+          ],
+          {
+            onConflict: ["agent_id", "customer_phone"], // ✅ عشان لو فيه واحدة قديمة تتحدث بدل ما تتكرر
+          }
+        );
+
+        if (error) {
+          console.error(error);
+          alert("❌ فشل في حفظ الملاحظة");
+        } else {
+          alert("✅ تم حفظ/تحديث الملاحظة بنجاح");
+          noteInput.value = "";
+        }
+      };
+      window.searchCustomer = function () {
+        const phone = document.getElementById("searchPhone").value.trim();
+        if (!phone) return alert("⚠️ أدخل رقم العميل للبحث");
+
+        // نبحث عن الصف بناءً على رقم الهاتف
+        const rows = document.querySelectorAll("tr");
+        let found = false;
+
+        rows.forEach((row) => {
+          if (row.innerText.includes(phone)) {
+            row.scrollIntoView({ behavior: "smooth", block: "center" });
+            row.style.backgroundColor = "#ffffcc"; // تمييز الصف
+            found = true;
+
+            // رجّع اللون الأصلي بعد 3 ثواني
+            setTimeout(() => {
+              row.style.backgroundColor = "";
+            }, 3000);
+          }
+        });
+
+        if (!found) alert("❌ لم يتم العثور على العميل");
+      };
+    </script>
   </body>
 </html>

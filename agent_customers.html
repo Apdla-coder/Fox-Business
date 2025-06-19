@@ -16,6 +16,12 @@
       h1 {
         text-align: center;
         color: #fff;
+        margin-bottom: 10px;
+      }
+
+      h3 {
+        text-align: center;
+        color: #fff;
         margin-bottom: 30px;
       }
 
@@ -26,6 +32,7 @@
         border-radius: 12px;
         overflow: hidden;
         box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        margin-bottom: 30px;
       }
 
       th,
@@ -57,15 +64,94 @@
         color: #fff;
       }
 
+      .section-header {
+        background: #f1f1f1;
+        font-weight: bold;
+        text-align: right;
+        font-size: 16px;
+        padding: 12px 20px;
+        color: #2c3e50;
+        border-radius: 8px;
+        margin: 30px 0 10px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+
       @media (max-width: 768px) {
         table,
         th,
         td {
           font-size: 13px;
         }
+        .section-header {
+          font-size: 15px;
+          padding: 10px;
+        }
       }
     </style>
+  </head>
 
+  <body>
+    <!-- ✅ الهيدر -->
+    <header
+      style="
+        background: linear-gradient(45deg, #2c3e50, #4ca1af);
+        padding: 15px 30px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        color: #fff;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        border-bottom-left-radius: 10px;
+        border-bottom-right-radius: 10px;
+      "
+    >
+      <div style="display: flex; align-items: center">
+        <img
+          src="./Orange_logo.svg.png"
+          alt="Logo"
+          style="height: 50px; margin-left: 15px; border-radius: 8px"
+        />
+        <h2 style="margin: 0">فوكس بيزنيس</h2>
+      </div>
+      <div style="font-size: 16px">نظام إدارة التحصيل</div>
+    </header>
+
+    <!-- ✅ العنوان -->
+    <h1 id="agentName">جاري التحميل...</h1>
+    <h3 id="totalDue">جاري حساب الإجمالي...</h3>
+    <input
+      type="text"
+      id="searchPhone"
+      placeholder="اكتب رقم العميل"
+      style="
+        padding: 10px;
+        width: 250px;
+        margin-bottom: 15px;
+        border-radius: 8px;
+      "
+    />
+    <button onclick="searchCustomer()">🔍 بحث</button>
+
+    <!-- ✅ أقسام العملاء -->
+    <div id="customersSections"></div>
+
+    <!-- ✅ الفوتر -->
+    <footer
+      style="
+        background: #2c3e50;
+        color: #fff;
+        text-align: center;
+        padding: 15px;
+        font-size: 14px;
+        border-top-left-radius: 10px;
+        border-top-right-radius: 10px;
+        margin-top: 40px;
+      "
+    >
+      <div>جميع الحقوق محفوظة &copy; فوكس بيزنيس</div>
+      <div>مطور النظام: عبدالله هاني</div>
+      <div>خدمة العملاء: 01212555345</div>
+    </footer>
     <script type="module">
       import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
@@ -99,31 +185,69 @@
           return;
         }
 
-        document.getElementById(
-          "agentName"
-        ).innerText = `شيت العملاء: ${data.name}`;
+        document.getElementById("agentName").innerText =
+          "شيت العملاء: " + data.name;
       }
 
       async function loadCustomers(agent_id) {
         try {
-          const { data, error } = await supabase
-            .from("customers_with_status")
+          const { data: customers, error: customerError } = await supabase
+            .from("customers")
             .select("*")
+            .eq("agent_id", agent_id)
+            .order("section", { ascending: true })
+            .order("created_at", { ascending: true });
+
+          const { data: notes, error: notesError } = await supabase
+            .from("agent_notes")
+            .select("customer_phone, note_text")
             .eq("agent_id", agent_id);
 
-          if (error) throw error;
+          if (customerError || notesError) throw customerError || notesError;
 
-          const table = document.getElementById("customersTable");
+          const container = document.getElementById("customersSections");
           let totalDueAmount = 0;
+          let lastSection = null;
+          let table = null;
+          let tbody = null;
 
-          data.forEach((customer) => {
-            const statusClass =
-              customer.collection_status === "تم التحصيل" ? "paid" : "unpaid";
-
-            // نحسب فقط الفواتير التي لم يتم تحصيلها
+          for (const customer of customers) {
             if (customer.collection_status !== "تم التحصيل") {
               totalDueAmount += customer.due_amount || 0;
             }
+
+            if (customer.section !== lastSection) {
+              lastSection = customer.section;
+
+              const sectionHeader = document.createElement("div");
+              sectionHeader.className = "section-header";
+              sectionHeader.textContent =
+                "📌 القسم: " + (lastSection || "غير محدد");
+              container.appendChild(sectionHeader);
+
+              table = document.createElement("table");
+              table.innerHTML = `
+            <thead>
+              <tr>
+                <th>اسم العميل</th>
+                <th>رقم الهاتف</th>
+                <th>قيمة الفاتورة</th>
+                <th>حالة التحصيل</th>
+                <th>ملاحظة المندوب</th>
+              </tr>
+            </thead>
+          `;
+              tbody = document.createElement("tbody");
+              table.appendChild(tbody);
+              container.appendChild(table);
+            }
+
+            const statusClass =
+              customer.collection_status === "تم التحصيل" ? "paid" : "unpaid";
+
+            const note =
+              notes.find((n) => n.customer_phone === customer.phone)
+                ?.note_text || "";
 
             const row = document.createElement("tr");
             row.innerHTML = `
@@ -131,84 +255,44 @@
           <td>${customer.phone}</td>
           <td>${customer.due_amount} ج.م</td>
           <td><span class="status ${statusClass}">${customer.collection_status}</span></td>
+          <td>${note}</td>
         `;
-            table.appendChild(row);
-          });
+            tbody.appendChild(row);
+          }
 
-          // نعرض المجموع أعلى الصفحة
           document.getElementById(
             "totalDue"
           ).innerText = `إجمالي المبالغ المتبقية: ${totalDueAmount.toFixed(
             2
           )} ج.م`;
         } catch (err) {
-          console.error("Customers Error:", err);
-          alert("خطأ أثناء تحميل العملاء");
+          console.error("❌ Error:", err);
+          alert("❌ حدث خطأ أثناء تحميل العملاء أو الملاحظات");
         }
       }
+      window.searchCustomer = function () {
+        const phone = document.getElementById("searchPhone").value.trim();
+        if (!phone) return alert("⚠️ أدخل رقم العميل للبحث");
+
+        // نبحث عن الصف بناءً على رقم الهاتف
+        const rows = document.querySelectorAll("tr");
+        let found = false;
+
+        rows.forEach((row) => {
+          if (row.innerText.includes(phone)) {
+            row.scrollIntoView({ behavior: "smooth", block: "center" });
+            row.style.backgroundColor = "#ffffcc"; // تمييز الصف
+            found = true;
+
+            // رجّع اللون الأصلي بعد 3 ثواني
+            setTimeout(() => {
+              row.style.backgroundColor = "";
+            }, 3000);
+          }
+        });
+
+        if (!found) alert("❌ لم يتم العثور على العميل");
+      };
     </script>
-  </head>
-
-  <body>
-    <header
-      style="
-        background: linear-gradient(45deg, #2c3e50, #4ca1af);
-        padding: 15px 30px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        color: #fff;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-        border-bottom-left-radius: 10px;
-        border-bottom-right-radius: 10px;
-      "
-    >
-      <div style="display: flex; align-items: center">
-        <img
-          src="./Orange_logo.svg.png"
-          alt="Logo"
-          style="height: 50px; margin-left: 15px; border-radius: 8px"
-        />
-        <h2 style="margin: 0">فوكس بيزنيس</h2>
-      </div>
-      <div style="font-size: 16px">نظام إدارة التحصيل</div>
-    </header>
-    <h1 id="agentName">جاري التحميل...</h1>
-    <h3
-      id="totalDue"
-      style="text-align: center; color: #fff; margin-top: -10px"
-    >
-      جاري حساب الإجمالي...
-    </h3>
-
-    <table>
-      <thead>
-        <tr>
-          <th>اسم العميل</th>
-          <th>رقم الهاتف</th>
-          <th>قيمة الفاتورة</th>
-          <th>حالة التحصيل</th>
-        </tr>
-      </thead>
-      <tbody id="customersTable"></tbody>
-    </table>
-    <!-- ✅ الفوتر -->
-
-    <footer
-      style="
-        background: #2c3e50;
-        color: #fff;
-        text-align: center;
-        padding: 15px;
-        font-size: 14px;
-        border-top-left-radius: 10px;
-        border-top-right-radius: 10px;
-        margin-top: 40px;
-      "
-    >
-      <div>جميع الحقوق محفوظة &copy; فوكس بيزنيس</div>
-      <div>مطور النظام: عبدالله هاني</div>
-      <div>خدمة العملاء: 01212555345</div>
-    </footer>
   </body>
 </html>
