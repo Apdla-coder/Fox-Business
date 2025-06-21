@@ -113,6 +113,36 @@
       a:hover {
         text-decoration: underline;
       }
+      /* ✅ تنسيق مخصص لقسم إضافة مندوب */
+      #addAgentContainer h3 {
+        font-size: 20px;
+        font-weight: bold;
+      }
+
+      #addAgentContainer input,
+      #addAgentContainer select {
+        padding: 10px;
+        font-size: 14px;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        margin-bottom: 10px;
+        width: 100%; /* مملوء على عرض العنصر */
+      }
+
+      #addAgentContainer button {
+        padding: 10px 20px;
+        font-size: 14px;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+        background: #27ae60;
+        color: #fff;
+        transition: 0.3s ease-in-out;
+      }
+
+      #addAgentContainer button:hover {
+        background: #219150;
+      }
 
       @media (max-width: 768px) {
         .cards-container {
@@ -175,24 +205,37 @@
         📊 <br />نسبة الإنجاز
         <div id="monthly_completion">0%</div>
       </div>
+
+      <!-- 🆕 إجمالي المحصل الكلي -->
+      <div class="card">
+        💸 <br />إجمالي المحصل
+        <div id="totalCollectedAll">0 ج.م</div>
+      </div>
+
+      <!-- 🆕 إجمالي المتبقي الكلي -->
+      <div class="card">
+        🔄 <br />إجمالي المتبقي
+        <div id="totalPendingAll">0 ج.م</div>
+      </div>
     </div>
 
     <h2>أداء المناديب اليوم</h2>
-
     <table>
       <thead>
         <tr>
           <th>اسم المندوب</th>
           <th>عدد الفواتير اليوم</th>
           <th>المبلغ المحصل اليوم</th>
-          <th>المبلغ المتبقي</th>
+          <th>إجمالي فواتيره</th>
+          <th>الفواتير المحصلة على مدار المدة</th>
+          <th>المحصل الكلي</th>
+          <th>المتبقي الكلي</th>
           <th>حالة اليوم</th>
           <th>آخر تسجيل دخول</th>
         </tr>
       </thead>
       <tbody id="agentsTable"></tbody>
     </table>
-
     <!-- ✅ HTML الأزرار -->
     <h2>رفع بيانات العملاء</h2>
     <label for="agentSelect">اختر المندوب:</label>
@@ -204,6 +247,7 @@
     </select>
     <br />
     <input type="file" id="excelFile" />
+
     <button id="uploadButton">📤 رفع البيانات</button>
     <div id="uploadStatus" style="margin-top: 10px"></div>
     <div
@@ -226,6 +270,34 @@
     <h2>حذف كل البيانات</h2>
     <button id="clearButton">🧨 حذف جميع البيانات</button>
     <div id="clearStatus" style="font-weight: bold; margin: 10px 0"></div>
+    <!-- ✅ فورم إضافة مندوب على صفحة الداشبورد -->
+    <div id="addAgentContainer" style="max-width: 300px; margin: 20px auto">
+      <h3>➕ إضافة مندوب</h3>
+      <div
+        id="addAgentAlert"
+        style="display: none; padding: 10px; border-radius: 5px"
+      ></div>
+      <input
+        id="newAgentName"
+        placeholder="اسم المندوب"
+        style="width: 100%; margin-bottom: 10px"
+      />
+      <input
+        id="newAgentEmail"
+        placeholder="البريد الإلكتروني"
+        style="width: 100%; margin-bottom: 10px"
+      />
+      <input
+        id="newAgentPassword"
+        placeholder="كلمة المرور"
+        style="width: 100%; margin-bottom: 10px"
+      />
+      <select id="newAgentRole" style="width: 100%; margin-bottom: 10px">
+        <option value="agent">مندوب</option>
+        <option value="admin">أدمن</option>
+      </select>
+      <button id="addAgentButton">إضافة مندوب</button>
+    </div>
 
     <!-- الفوتر -->
     <footer
@@ -276,68 +348,144 @@
           ?.addEventListener("click", clearAllData);
       };
 
-      // ✅ 4. تحميل ملخص الأداء من جدول daily_summary
+      // ✅ 4. تحميل ملخص الأداء من جدول daily_summary + الإجماليات الكلية
       async function loadSummary() {
         try {
+          // تحميل ملخص الأداء اليومي من الجدول
           const { data } = await supabase
             .from("daily_summary")
             .select("*")
             .limit(1)
             .maybeSingle();
-          if (!data) return;
+
+          // إجمالي الفواتير الكلي من customers
+          const { data: allCustomers } = await supabase
+            .from("customers")
+            .select("id");
+          const totalInvoicesAllTime = allCustomers ? allCustomers.length : 0;
+
+          // عرض إجمالي الفواتير الكلي
           document.getElementById("total_invoices").innerText =
-            data.total_invoices;
-          document.getElementById("total_collected").innerText =
-            data.total_collected;
-          document.getElementById("total_pending").innerText =
-            data.total_pending_invoices;
-          document.getElementById("monthly_completion").innerText =
-            data.monthly_completion + "%";
+            totalInvoicesAllTime || 0;
+
+          if (data) {
+            document.getElementById("total_collected").innerText =
+              data.total_collected || 0;
+            document.getElementById("total_pending").innerText =
+              data.total_pending_invoices || 0;
+
+            // حساب نسبة الإنجاز الديناميكية
+            let completionPercentage = 0;
+            if (data.total_collected >= 7000) {
+              completionPercentage = 90;
+            } else if (data.total_collected >= 5000) {
+              completionPercentage = 70;
+            } else {
+              completionPercentage = 30;
+            }
+            document.getElementById("monthly_completion").innerText =
+              completionPercentage + "%";
+          }
+
+          // إجمالي المحصل الكلي من العملاء الذين حالتهم "تم التحصيل"
+          const { data: allCollected } = await supabase
+            .from("customers")
+            .select("due_amount")
+            .eq("collection_status", "تم التحصيل");
+
+          let totalCollectedAll = (allCollected || []).reduce(
+            (sum, c) => sum + (c.due_amount || 0),
+            0
+          );
+
+          // إجمالي المتبقي الكلي من العملاء الذين لم يتم تحصيلهم
+          const { data: allPending } = await supabase
+            .from("customers")
+            .select("due_amount")
+            .neq("collection_status", "تم التحصيل");
+
+          let totalPendingAll = (allPending || []).reduce(
+            (sum, c) => sum + (c.due_amount || 0),
+            0
+          );
+
+          // عرض القيم داخل عناصر HTML إذا كانوا موجودين
+          const totalCollectedAllEl =
+            document.getElementById("totalCollectedAll");
+          if (totalCollectedAllEl) {
+            totalCollectedAllEl.innerText =
+              totalCollectedAll.toFixed(2) + " ج.م";
+          }
+
+          const totalPendingAllEl = document.getElementById("totalPendingAll");
+          if (totalPendingAllEl) {
+            totalPendingAllEl.innerText = totalPendingAll.toFixed(2) + " ج.م";
+          }
         } catch (err) {
           console.error("Error loading summary:", err);
         }
       }
-
-      // ✅ 5. تحميل أداء المناديب
+      // ✅ 5. تحميل أداء المناديب + المحصل على كل الفترة
       async function loadAgents() {
         try {
           const { data: agents } = await supabase
             .from("agents_summary")
             .select("*");
           const table = document.getElementById("agentsTable");
+          table.innerHTML = ""; // تفريغ الجدول قبل ملء البيانات
+
           for (const agent of agents) {
-            let totalDue = 0;
-            const { data: customers } = await supabase
-              .from("customers_with_status")
+            // جلب بيانات العملاء للمندوب
+            const { data: agentCustomers } = await supabase
+              .from("customers")
               .select("due_amount, collection_status")
               .eq("agent_id", agent.agent_id);
-            customers.forEach((c) => {
-              if (c.collection_status !== "تم التحصيل")
-                totalDue += c.due_amount || 0;
+
+            let totalCollectedAll = 0;
+            let totalPendingAll = 0;
+
+            agentCustomers.forEach((c) => {
+              if (c.collection_status === "تم التحصيل") {
+                totalCollectedAll += c.due_amount || 0;
+              } else {
+                totalPendingAll += c.due_amount || 0;
+              }
             });
+
+            // ✅ إجمالي الفواتير على كل الفترة
+            const agentInvoicesAllTime = agentCustomers
+              ? agentCustomers.length
+              : 0;
+
+            // ✅ الفواتير المحصلة على كل الفترة
+            const agentCollectedInvoicesAllTime = agentCustomers.filter(
+              (c) => c.collection_status === "تم التحصيل"
+            ).length;
 
             const row = document.createElement("tr");
             row.innerHTML = `
-          <td><a href="agent_customers.html?agent_id=${agent.agent_id}">${
+        <td><a href="agent_customers.html?agent_id=${agent.agent_id}">${
               agent.agent_name
             }</a></td>
-          <td>${agent.collected_invoices_today}</td>
-          <td>${agent.collected_amount_today} ج.م</td>
-          <td>${totalDue.toFixed(2)} ج.م</td>
-          <td>${agent.collected_invoices_today > 0 ? "✅" : "⏳"}</td>
-          <td>${
-            agent.last_login
-              ? new Date(agent.last_login).toLocaleString()
-              : "لم يسجل بعد"
-          }</td>
-        `;
+        <td>${agent.collected_invoices_today}</td>
+        <td>${agent.collected_amount_today} ج.م</td>
+        <td>${agentInvoicesAllTime} فاتورة</td>
+        <td>${agentCollectedInvoicesAllTime} فاتورة</td>
+        <td>${totalCollectedAll.toFixed(2)} ج.م</td>
+        <td>${totalPendingAll.toFixed(2)} ج.م</td>
+        <td>${agent.collected_invoices_today > 0 ? "✅" : "⏳"}</td>
+        <td>${
+          agent.last_login
+            ? new Date(agent.last_login).toLocaleString()
+            : "لم يسجل بعد"
+        }</td>
+      `;
             table.appendChild(row);
           }
         } catch (err) {
           console.error("Error loading agents:", err);
         }
       }
-
       // ✅ 6. تحميل قائمة المناديب لرفع البيانات
       async function loadUploadAgents() {
         const { data } = await supabase.from("agents").select("id,name");
@@ -491,6 +639,63 @@
         el.innerText = msg;
         el.style.color = color;
       }
+
+      // ✅ الدالة النهائية لإضافة مندوب
+      async function addAgent() {
+        const name = document.getElementById("newAgentName").value.trim();
+        const email = document.getElementById("newAgentEmail").value.trim();
+        const password = document
+          .getElementById("newAgentPassword")
+          .value.trim();
+        const role = document.getElementById("newAgentRole").value;
+
+        const alertBox = document.getElementById("addAgentAlert");
+
+        // ✅ تحقق من ملء الحقول
+        if (!name || !email || !password) {
+          alertBox.innerText = "يرجى ملء جميع الحقول.";
+          alertBox.style.display = "block";
+          alertBox.style.backgroundColor = "#f8d7da";
+          alertBox.style.color = "#721c24";
+          return;
+        }
+
+        try {
+          // ✅ عملية الإدخال على الجدول
+          const { error } = await supabase
+            .from("agents")
+            .insert([{ name, email, password, role }]);
+
+          if (error) {
+            alertBox.innerText = "حدث خطأ أثناء إضافة المندوب.";
+            alertBox.style.display = "block";
+            alertBox.style.backgroundColor = "#f8d7da";
+            alertBox.style.color = "#721c24";
+            console.error(error);
+          } else {
+            alertBox.innerText = "تمت إضافة المندوب بنجاح ✅";
+            alertBox.style.display = "block";
+            alertBox.style.backgroundColor = "#d4edda"; // أخضر فاتح
+            alertBox.style.color = "#155724"; // أخضر غامق
+
+            // ✅ تفريغ الحقول
+            document.getElementById("newAgentName").value = "";
+            document.getElementById("newAgentEmail").value = "";
+            document.getElementById("newAgentPassword").value = "";
+          }
+        } catch (err) {
+          alertBox.innerText = "حدث خطأ غير متوقع.";
+          alertBox.style.display = "block";
+          alertBox.style.backgroundColor = "#f8d7da";
+          alertBox.style.color = "#721c24";
+          console.error(err);
+        }
+      }
+
+      // ✅ ربط الزر بالدالة
+      document
+        .getElementById("addAgentButton")
+        ?.addEventListener("click", addAgent);
     </script>
   </body>
 </html>
