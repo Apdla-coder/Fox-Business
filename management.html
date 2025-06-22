@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <title>رفع البيانات وإدارة المناديب</title>
+    <style>
+      /* =========== الشكل الأساسي =========== */
+      body {
+        font-family: Arial, sans-serif;
+        background: linear-gradient(135deg, #2c3e50, #4ca1af);
+        color: #f5f5f5;
+        padding: 20px;
+        max-width: 800px;
+        margin: auto;
+        line-height: 1.5;
+      }
+
+      /* =========== العناوين =========== */
+      h2,
+      h3 {
+        text-align: center;
+        font-weight: bold;
+        margin: 15px 0;
+      }
+      h2 {
+        font-size: 1.3rem;
+        color: #fffae3;
+      }
+      h3 {
+        font-size: 1.1rem;
+        color: #fffae3;
+      }
+      a {
+        color: orange;
+        text-decoration: none;
+        font-weight: bold;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+
+      /* =========== الحاويات العامة =========== */
+      #addAgentContainer,
+      .form-container {
+        margin: 25px auto;
+        padding: 20px;
+        background-color: rgba(255, 255, 255, 0.08);
+        border-radius: 6px;
+      }
+
+      /* =========== الفورم على سطرين =========== */
+      .form-row {
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 20px;
+      }
+      .form-group {
+        flex: 1 1 48%;
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 15px;
+      }
+      label {
+        font-size: 0.9rem;
+        font-weight: 600;
+        margin-bottom: 5px;
+      }
+      select,
+      input,
+      button {
+        padding: 8px 12px;
+        font-size: 0.9rem;
+        border-radius: 4px;
+        border: none;
+        outline: none;
+      }
+      select,
+      input {
+        width: 80%; /* مريح على الديسكتوب */
+        margin-bottom: 20px;
+      }
+      select:focus,
+      input:focus {
+        border: 1px solid #fffae3;
+      }
+
+      /* =========== الجدول =========== */
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.9rem;
+        margin: 20px 0;
+      }
+      table thead {
+        background-color: rgba(255, 255, 255, 0.15);
+      }
+      table th,
+      table td {
+        padding: 8px;
+        text-align: center;
+        border-bottom: 1px solid #888;
+      }
+      table tr:hover {
+        background-color: rgba(255, 255, 255, 0.07);
+      }
+
+      /* =========== الأزرار =========== */
+      button {
+        cursor: pointer;
+        font-weight: bold;
+        background-color: #fffae3;
+        color: #2c3e50;
+        margin: 5px 0;
+      }
+      button:hover {
+        background-color: #ffe97f;
+      }
+
+      /* =========== الرسائل والحالة =========== */
+      #uploadLoader {
+        font-size: 14px;
+        color: #ffe97f;
+      }
+      #addAgentAlert,
+      #uploadStatus,
+      #clearStatus {
+        margin: 10px 0;
+        padding: 8px;
+        font-size: 13px;
+        font-weight: bold;
+        border-radius: 4px;
+      }
+      #addAgentAlert {
+        display: none;
+      }
+
+      /* =========== موبايل =========== */
+      @media (max-width: 768px) {
+        .form-group {
+          flex: 1 1 100%; /* عنصر كامل على السطر على موبايل */
+        }
+        select,
+        input {
+          width: 100%; /* على موبايل يتمدد على العرض كامل */
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- =========== الهيدر =========== -->
+    <header
+      style="
+        background: linear-gradient(45deg, #2c3e50, #4ca1af);
+        padding: 15px 30px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        color: #fff;
+        border-bottom-left-radius: 10px;
+        border-bottom-right-radius: 10px;
+      "
+    >
+      <div style="display: flex; align-items: center">
+        <a href="./index.html"
+          ><img
+            src="./Orange_logo.svg.png"
+            alt="Logo"
+            style="height: 40px; margin-left: 10px; border-radius: 5px"
+        /></a>
+        <h2 style="margin: 0">فوكس بيزنيس</h2>
+      </div>
+      <div style="font-size: 16px">
+        <a href="./dashboard.html"><h2>لوحة التحكم ⬅</h2></a>
+      </div>
+    </header>
+
+    <!-- =========== رفع بيانات العملاء =========== -->
+    <h2>رفع بيانات العملاء</h2>
+    <div class="form-container">
+      <label for="agentSelect">اختر المندوب:</label>
+      <select id="agentSelect">
+        <option value="">-- اختر --</option>
+      </select>
+      <label for="excelFile">ملف Excel:</label>
+      <input type="file" id="excelFile" accept=".xls,.xlsx" />
+      <button id="excelUploadButton">📤 رفع البيانات</button>
+      <div id="uploadStatus"></div>
+      <div id="uploadLoader" style="display: none">⏳ جاري رفع البيانات...</div>
+    </div>
+
+    <!-- =========== حذف البيانات =========== -->
+    <h2>حذف كل البيانات</h2>
+    <button id="clearButton">🧨 حذف جميع البيانات</button>
+    <div id="clearStatus"></div>
+
+    <!-- =========== فورم إضافة مندوب =========== -->
+    <div id="addAgentContainer">
+      <h3>➕ إضافة مندوب</h3>
+      <div id="addAgentAlert"></div>
+      <input id="newAgentName" placeholder="اسم المندوب" />
+      <input id="newAgentEmail" placeholder="البريد الإلكتروني" />
+      <input id="newAgentPassword" placeholder="كلمة المرور" />
+      <select id="newAgentRole">
+        <option value="agent">مندوب</option>
+        <option value="admin">أدمن</option>
+      </select>
+      <button id="addAgentButton">➕ إضافة مندوب</button>
+    </div>
+
+    <!-- =========== الفوتر =========== -->
+    <footer
+      style="
+        background: #2c3e50;
+        color: #fff;
+        text-align: center;
+        padding: 15px;
+        font-size: 14px;
+        border-top-left-radius: 10px;
+        border-top-right-radius: 10px;
+        margin-top: 40px;
+      "
+    >
+      <div>جميع الحقوق محفوظة &copy; فوكس بيزنيس</div>
+      <div>مطور النظام: عبدالله هاني</div>
+      <div>خدمة العملاء: 01212555345</div>
+    </footer>
+
+    <!-- =========== الجافا سكربت =========== -->
+    <script type="module">
+      import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+      import * as XLSX from "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/+esm";
+
+      const supabase = createClient(
+        "https://vyhtsdqccyvygelekzey.supabase.co",
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5aHRzZHFjY3l2eWdlbGVremV5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk3NTQwOTMsImV4cCI6MjA2NTMzMDA5M30.bRjHD6OkziXjfavEX-tA-6IFdag7KoFBqLRgNLqwcdg"
+      );
+
+      window.onload = async () => {
+        await loadAgentsOptions();
+        attachEventListeners();
+      };
+
+      function attachEventListeners() {
+        document
+          .getElementById("excelUploadButton")
+          ?.addEventListener("click", uploadExcel);
+        document
+          .getElementById("clearButton")
+          ?.addEventListener("click", clearAllData);
+        document
+          .getElementById("addAgentButton")
+          ?.addEventListener("click", addAgent);
+      }
+
+      async function loadAgentsOptions() {
+        const select = document.getElementById("agentSelect");
+        if (!select) return;
+
+        select.innerHTML = '<option value="">-- اختر مندوب --</option>';
+        const { data: agents, error } = await supabase
+          .from("agents")
+          .select("*");
+        if (error) {
+          alert("❌ خطأ أثناء تحميل قائمة المندوبين");
+          return;
+        }
+        agents?.forEach((agent) => {
+          const option = document.createElement("option");
+          option.value = agent.id;
+          option.textContent = agent.name;
+          select.appendChild(option);
+        });
+      }
+
+      async function uploadExcel() {
+        const fileInput = document.getElementById("excelFile");
+        const loader = document.getElementById("uploadLoader");
+        const agent_id = document.getElementById("agentSelect").value;
+
+        if (!agent_id) return setStatus("⚠️ اختر المندوب أولاً.", "red");
+        if (!fileInput.files.length)
+          return setStatus("📄 اختر ملف أولاً.", "red");
+
+        try {
+          loader.style.display = "block";
+          setStatus("", "");
+          const file = fileInput.files[0];
+          const data = new Uint8Array(await file.arrayBuffer());
+          const workbook = XLSX.read(data, { type: "array" });
+          const sheet = workbook.Sheets[workbook.SheetNames[0]];
+          const rows = XLSX.utils.sheet_to_json(sheet);
+
+          if (!rows.length)
+            return setStatus("❌ الملف فارغ أو التنسيق غير صحيح.", "red");
+
+          const currentMonth = new Date().toISOString().slice(0, 7);
+          const newCustomers = [];
+          const updates = [];
+
+          for (const row of rows) {
+            const phone = row.phone?.toString().trim();
+            const due_amount = Number(row.due_amount) || 0;
+
+            if (!phone || due_amount <= 0) continue;
+
+            const { data: existing } = await supabase
+              .from("customers")
+              .select("*")
+              .eq("phone", phone)
+              .eq("agent_id", agent_id)
+              .order("created_at", { ascending: false })
+              .limit(1)
+              .maybeSingle();
+
+            if (existing) {
+              if (existing.collection_status === "تم التحصيل") {
+                newCustomers.push({
+                  ...row,
+                  agent_id,
+                  billing_month: currentMonth,
+                  collection_status: "لم يتم التحصيل",
+                });
+              } else {
+                updates.push({
+                  id: existing.id,
+                  due_amount: (existing.due_amount || 0) + due_amount,
+                  billing_month: currentMonth,
+                });
+              }
+            } else {
+              newCustomers.push({
+                ...row,
+                agent_id,
+                billing_month: currentMonth,
+                collection_status: "لم يتم التحصيل",
+              });
+            }
+          }
+
+          if (newCustomers.length) {
+            const { error: insertError } = await supabase
+              .from("customers")
+              .insert(newCustomers);
+            if (insertError) {
+              return setStatus("❌ فشل إدخال البيانات الجديدة.", "red");
+            }
+          }
+
+          for (const u of updates) {
+            const { error: updateError } = await supabase
+              .from("customers")
+              .update({
+                due_amount: u.due_amount,
+                billing_month: u.billing_month,
+              })
+              .eq("id", u.id);
+            if (updateError) {
+              console.error(
+                `❌ فشل تحديث العميل ${u.id}:`,
+                updateError.message
+              );
+            }
+          }
+
+          setStatus("✅ تم رفع وتحديث البيانات بنجاح.", "green");
+          fileInput.value = "";
+        } catch (err) {
+          console.error("❌ حدث خطأ:", err.message);
+          setStatus("❌ حدث خطأ غير متوقع.", "red");
+        } finally {
+          loader.style.display = "none";
+        }
+      }
+
+      async function clearAllData() {
+        const status = document.getElementById("clearStatus");
+        if (!confirm("⚠️ هل أنت متأكد أنك تريد حذف جميع البيانات؟")) return;
+
+        await supabase.from("collections").delete().not("id", "is", null);
+        await supabase.from("customers").delete().not("id", "is", null);
+        status.innerText = "✅ تم حذف جميع البيانات بنجاح.";
+        status.style.color = "green";
+      }
+
+      function setStatus(msg, color) {
+        const el = document.getElementById("uploadStatus");
+        el.innerText = msg;
+        el.style.color = color;
+      }
+
+      async function addAgent() {
+        const name = document.getElementById("newAgentName").value.trim();
+        const email = document.getElementById("newAgentEmail").value.trim();
+        const password = document
+          .getElementById("newAgentPassword")
+          .value.trim();
+        const role = document.getElementById("newAgentRole").value;
+
+        const alertBox = document.getElementById("addAgentAlert");
+        if (!name || !email || !password) {
+          alertBox.innerText = "يرجى ملء جميع الحقول.";
+          alertBox.style.display = "block";
+          alertBox.style.backgroundColor = "#f8d7da";
+          alertBox.style.color = "#721c24";
+          return;
+        }
+
+        const { error } = await supabase
+          .from("agents")
+          .insert([{ name, email, password, role }]);
+        if (error) {
+          alertBox.innerText = "حدث خطأ أثناء إضافة المندوب.";
+          alertBox.style.display = "block";
+          alertBox.style.backgroundColor = "#f8d7da";
+          alertBox.style.color = "#721c24";
+          console.error(error);
+        } else {
+          alertBox.innerText = "تمت إضافة المندوب بنجاح ✅";
+          alertBox.style.display = "block";
+          alertBox.style.backgroundColor = "#d4edda";
+          alertBox.style.color = "#155724";
+          document.getElementById("newAgentName").value = "";
+          document.getElementById("newAgentEmail").value = "";
+          document.getElementById("newAgentPassword").value = "";
+        }
+      }
+    </script>
+  </body>
+</html>

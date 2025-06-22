@@ -14,12 +14,24 @@
         flex-direction: column;
         align-items: center;
       }
-
+      #sideMotivationalBox {
+        position: fixed;
+        top: 100px;
+        left: 20px;
+        padding: 15px;
+        background: orange;
+        color: white;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: bold;
+        max-width: 180px;
+        box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.15);
+        z-index: 1000;
+      }
       h1 {
         color: #fff;
         margin: 30px 0 20px;
       }
-
       .table-container {
         background: #ffffff;
         padding: 20px;
@@ -29,12 +41,10 @@
         max-width: 1000px;
         overflow-x: auto;
       }
-
       table {
         width: 100%;
         border-collapse: collapse;
       }
-
       th,
       td {
         padding: 15px 10px;
@@ -42,12 +52,10 @@
         border-bottom: 1px solid #ddd;
         font-size: 15px;
       }
-
       th {
         background-color: #f0f0f0;
         color: #333;
       }
-
       button {
         padding: 8px 16px;
         background: #27ae60;
@@ -58,13 +66,39 @@
         cursor: pointer;
         transition: 0.3s;
       }
-
       button:hover {
         background: #1e8449;
       }
+      .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.3);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+      }
+      .spinner {
+        border: 6px solid #f3f3f3;
+        border-top: 6px solid #27ae60;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
     </style>
   </head>
-
   <body>
     <header
       style="
@@ -80,36 +114,40 @@
       "
     >
       <div style="display: flex; align-items: center">
-        <a href="./index.html">
-          <img
+        <a href="./index.html"
+          ><img
             src="./Orange_logo.svg.png"
             alt="Logo"
             style="height: 50px; margin-left: 15px; border-radius: 8px"
-          />
-        </a>
+        /></a>
         <h2 style="margin: 0">فوكس بيزنيس</h2>
       </div>
       <div style="font-size: 16px">نظام إدارة التحصيل</div>
     </header>
+
     <h1>العملاء المطلوب تحصيلهم</h1>
+    <div id="sideMotivationalBox"></div>
+    <div id="agentMessages" style="margin: 20px 0"></div>
     <h3 id="totalDue" style="text-align: center; color: #fff">
       المبلغ المتبقي: ...
     </h3>
     <h3 id="collectedAmount" style="text-align: center; color: #fff">
       المبلغ المحصل: 0.00 ج.م
     </h3>
+
+    <!-- خانة البحث -->
     <input
       type="text"
-      id="searchPhone"
-      placeholder="اكتب رقم العميل"
+      id="searchInput"
+      placeholder="اكتب الاسم أو الرقم للبحث..."
       style="
         padding: 10px;
-        width: 250px;
+        width: 300px;
         margin-bottom: 15px;
         border-radius: 8px;
       "
     />
-    <button onclick="searchCustomer()">🔍 بحث</button>
+    <button id="searchButton">🔍 بحث</button>
 
     <div class="table-container">
       <table>
@@ -120,19 +158,19 @@
             <th>العنوان</th>
             <th>المبلغ المستحق</th>
             <th>تحصيل</th>
+            <th>حفظ ملاحظة</th>
           </tr>
         </thead>
         <tbody id="customersTable"></tbody>
       </table>
     </div>
-    <!-- ✅ الفوتر -->
+
     <footer
       style="
         background: #2c3e50;
         color: #fff;
         text-align: center;
         padding: 15px;
-        font-size: 14px;
         border-top-left-radius: 10px;
         border-top-right-radius: 10px;
         margin-top: 40px;
@@ -142,194 +180,141 @@
       <div>مطور النظام: عبدالله هاني</div>
       <div>خدمة العملاء: 01212555345</div>
     </footer>
-    <!-- أضف قبل نهاية </body> مباشرةً -->
-
-    <style>
-      .loading-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.3);
-        display: none;
-        align-items: center;
-        justify-content: center;
-        z-index: 9999;
-      }
-
-      .spinner {
-        border: 6px solid #f3f3f3;
-        border-top: 6px solid #27ae60;
-        border-radius: 50%;
-        width: 50px;
-        height: 50px;
-        animation: spin 1s linear infinite;
-      }
-
-      @keyframes spin {
-        0% {
-          transform: rotate(0deg);
-        }
-        100% {
-          transform: rotate(360deg);
-        }
-      }
-    </style>
 
     <div class="loading-overlay" id="loadingOverlay">
       <div class="spinner"></div>
     </div>
 
+    <!-- ⚡️ السكربت النهائي ⚡️ -->
     <script type="module">
-      // ✅ 1. استدعاء مكتبة Supabase
       import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-      // ✅ 2. إنشاء الاتصال بـ Supabase
       const supabase = createClient(
         "https://vyhtsdqccyvygelekzey.supabase.co",
         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5aHRzZHFjY3l2eWdlbGVremV5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk3NTQwOTMsImV4cCI6MjA2NTMzMDA5M30.bRjHD6OkziXjfavEX-tA-6IFdag7KoFBqLRgNLqwcdg"
       );
 
-      // ✅ 3. تحميل بيانات العملاء عند تحميل الصفحة
+      let customersData = [];
+
       window.onload = async function () {
         const agent_id = localStorage.getItem("agent_id");
-        const table = document.getElementById("customersTable");
-        const loading = document.getElementById("loadingOverlay");
-
-        try {
-          // ✅ عرض شريط التحميل
-          loading.style.display = "flex";
-
-          // ✅ جلب العملاء غير المحصلين للمندوب
-          const { data, error } = await supabase
-            .from("customers")
-            .select("*")
-            .eq("agent_id", agent_id)
-            .eq("collection_status", "لم يتم التحصيل")
-            .order("section", { ascending: true }) // ترتيب حسب القسم
-            .order("created_at", { ascending: true });
-
-          if (error) throw error;
-
-          let totalDue = 0;
-          let lastSection = null;
-
-          // ✅ 4. عرض العملاء في الجدول مع فواصل الأقسام
-          data.forEach((customer) => {
-            totalDue += customer.due_amount || 0;
-
-            // ✅ إذا تغير القسم، أضف صف فاصل
-            if (customer.section !== lastSection) {
-              const sectionRow = document.createElement("tr");
-              sectionRow.innerHTML = `
-            <td colspan="5" style="background: #eee; font-weight: bold; text-align: right; padding: 10px;">
-              📌 القسم: ${customer.section || "غير محدد"}
-            </td>
-          `;
-              table.appendChild(sectionRow);
-              lastSection = customer.section;
-            }
-
-            // ✅ صف بيانات العميل
-            const row = document.createElement("tr");
-            row.id = `row_${customer.id}`;
-            row.innerHTML = `
-  <td>${customer.name}</td>
-  <td>${customer.phone}</td>
-  <td>${customer.address || ""}</td>
-  <td>${customer.due_amount} ج.م</td>
-  <td>
-    <button id="btn_${customer.id}" onclick="collect('${customer.id}', ${
-              customer.due_amount
-            })">
-      تحصيل
-    </button>
-  </td>
-  <td>
-    <textarea id="note_${
-      customer.id
-    }" placeholder="اكتب الملاحظة هنا..." style="width: 150px; height: 40px;"></textarea>
-    <br />
-<button onclick="saveNote('${customer.id}', '${customer.name}', '${
-              customer.phone
-            }')">💬 حفظ</button>
-  </td>
-`;
-            table.appendChild(row);
-          });
-
-          // ✅ عرض إجمالي المبالغ المتبقية
-          document.getElementById(
-            "totalDue"
-          ).innerText = `المبلغ المتبقي: ${totalDue.toFixed(2)} ج.م`;
-
-          // ✅ تحميل المبالغ المحصلة
-          const { data: collections, error: collectedError } = await supabase
-            .from("collections")
-            .select("amount")
-            .eq("collected_by", agent_id);
-
-          if (collectedError) throw collectedError;
-
-          let collectedAmount = 0;
-          collections.forEach((c) => {
-            collectedAmount += c.amount || 0;
-          });
-
-          // ✅ عرض المبلغ المحصل
-          document.getElementById(
-            "collectedAmount"
-          ).innerText = `المبلغ المحصل: ${collectedAmount.toFixed(2)} ج.م`;
-        } catch (err) {
-          console.error(err);
-          alert("⚠️ حدث خطأ أثناء تحميل البيانات");
-        } finally {
-          // ✅ إخفاء اللودينج
-          loading.style.display = "none";
+        if (!agent_id) {
+          alert("❌ليس لديك صلاحية");
+          return;
         }
+        await loadCustomers(agent_id);
+        await loadAgentMessages(agent_id);
+        showRandomMotivationalMessage();
       };
 
-      // ✅ 5. عملية التحصيل
-      window.collect = async function (customer_id, due_amount) {
-        const btn = document.getElementById(`btn_${customer_id}`);
-        const collected_by = localStorage.getItem("agent_id");
+      async function loadCustomers(agent_id) {
+        const table = document.getElementById("customersTable");
         const loading = document.getElementById("loadingOverlay");
+        loading.style.display = "flex";
 
-        const confirmCollect = confirm("هل تريد تأكيد التحصيل؟");
-        if (!confirmCollect) return;
+        const { data, error } = await supabase
+          .from("customers")
+          .select("*")
+          .eq("agent_id", agent_id)
+          .order("section", { ascending: true })
+          .order("created_at", { ascending: true });
 
+        if (error) {
+          alert("⚠️ حدث خطأ أثناء تحميل العملاء");
+          console.error(error);
+          loading.style.display = "none";
+          return;
+        }
+
+        customersData = data;
+        displayCustomers(data);
+        await loadAmounts(agent_id);
+        loading.style.display = "none";
+      }
+
+      function displayCustomers(data) {
+        const table = document.getElementById("customersTable");
+        table.innerHTML = ""; // تفريغ الجدول
+        let totalDue = 0;
+        let lastSection = null;
+
+        data.forEach((customer) => {
+          totalDue += customer.due_amount || 0;
+
+          if (customer.section !== lastSection) {
+            const sectionRow = document.createElement("tr");
+            sectionRow.innerHTML = `
+        <td colspan="6" style="background:#eee; font-weight:bold;text-align:right;padding:10px;">
+            📌 القسم: ${customer.section || "غير محدد"}
+        </td>`;
+            table.appendChild(sectionRow);
+            lastSection = customer.section;
+          }
+
+          const isCollected = customer.collection_status === "تم التحصيل";
+          const row = document.createElement("tr");
+          row.id = `row_${customer.id}`;
+          row.style.opacity = isCollected ? "0.5" : "1";
+
+          row.innerHTML = `
+      <td>${customer.name}</td>
+      <td>${customer.phone}</td>
+      <td>${customer.address || ""}</td>
+      <td>${customer.due_amount} ج.م</td>
+      <td>
+        <button id="btn_${customer.id}" ${isCollected ? "disabled" : ""} 
+                onClick="collect('${customer.id}', ${customer.due_amount})">
+                ${isCollected ? "تم" : "تحصيل"}
+        </button>
+      </td>
+      <td>
+        <textarea id="note_${customer.id}" placeholder="اكتب الملاحظة هنا..."
+           style="width:150px;height:40px;"></textarea><br/>
+        <button onClick="saveNote('${customer.id}','${customer.name}','${
+            customer.phone
+          }')">
+           💬 حفظ
+        </button>
+      </td>`;
+          table.appendChild(row);
+        });
+        document.getElementById(
+          "totalDue"
+        ).innerText = `المبلغ المتبقي: ${totalDue.toFixed(2)} ج.م`;
+      }
+
+      // ✅ التحصيل
+      window.collect = async function (customer_id, due_amount) {
+        if (!confirm("هل تريد تأكيد التحصيل؟")) return;
+
+        const btn = document.getElementById(`btn_${customer_id}`);
         btn.disabled = true;
         btn.innerText = "جاري التحصيل...";
 
+        const agent_id = localStorage.getItem("agent_id");
         try {
-          loading.style.display = "flex";
-
-          // ✅ 1. إضافة سجل إلى جدول التحصيل
-          const { error: insertError } = await supabase
+          await supabase
             .from("collections")
-            .insert([{ customer_id, amount: due_amount, collected_by }]);
-
-          if (insertError) throw insertError;
-
-          // ✅ 2. تحديث حالة العميل إلى "تم التحصيل"
-          const { error: updateError } = await supabase
+            .insert([
+              { customer_id, amount: due_amount, collected_by: agent_id },
+            ]);
+          await supabase
             .from("customers")
             .update({ collection_status: "تم التحصيل" })
             .eq("id", customer_id);
 
-          if (updateError) throw updateError;
-
-          // ✅ 3. إزالة العميل من الجدول
-          document.getElementById(`row_${customer_id}`).remove();
           alert("✅ تم التحصيل بنجاح");
-        } catch (err) {
-          console.error(err);
+
+          // تحديث مظهر العنصر بدلًا من إزالته
+          const row = document.getElementById(`row_${customer_id}`);
+          row.style.opacity = "0.5";
+          btn.innerText = "تم";
+          btn.disabled = true;
+        } catch (error) {
           alert("❌ حدث خطأ أثناء عملية التحصيل");
+          console.error(error);
           btn.disabled = false;
           btn.innerText = "تحصيل";
-        } finally {
-          loading.style.display = "none";
         }
       };
 
@@ -339,59 +324,179 @@
         customer_phone
       ) {
         const agent_id = localStorage.getItem("agent_id");
-        const noteInput = document.getElementById(`note_${customer_id}`);
-        const note_text = noteInput.value.trim();
-
+        const note_text = document
+          .getElementById(`note_${customer_id}`)
+          .value.trim();
         if (!note_text) {
-          alert("⚠️ اكتب ملاحظة أولاً");
+          alert("⚠️ اكتب ملاحظة أولًا");
           return;
         }
 
-        const { error } = await supabase.from("agent_notes").upsert(
-          [
-            {
-              agent_id,
-              customer_phone,
-              customer_name,
-              note_text,
-            },
-          ],
-          {
-            onConflict: ["agent_id", "customer_phone"], // ✅ عشان لو فيه واحدة قديمة تتحدث بدل ما تتكرر
-          }
+        const { error } = await supabase
+          .from("agent_notes")
+          .upsert([{ agent_id, customer_phone, customer_name, note_text }], {
+            onConflict: ["agent_id", "customer_phone"],
+          });
+        if (error) {
+          alert("❌ حدث خطأ أثناء حفظ الملاحظة");
+          console.error(error);
+        } else {
+          alert("✅ تم حفظ الملاحظة بنجاح");
+          document.getElementById(`note_${customer_id}`).value = "";
+        }
+      };
+
+      async function loadAmounts(agent_id) {
+        const [{ data: collections }, { data: messages }] = await Promise.all([
+          supabase
+            .from("collections")
+            .select("amount")
+            .eq("collected_by", agent_id),
+          supabase
+            .from("messages")
+            .select("*")
+            .eq("agent_id", agent_id)
+            .order("created_at", { ascending: false }),
+        ]);
+
+        let collectedAmount = collections.reduce(
+          (sum, c) => sum + (c.amount || 0),
+          0
         );
+        document.getElementById(
+          "collectedAmount"
+        ).innerText = `المبلغ المحصل: ${collectedAmount.toFixed(2)} ج.م`;
+      }
+
+      async function loadAgentMessages(agent_id) {
+        const { data: messages, error } = await supabase
+          .from("messages")
+          .select("*")
+          .eq("agent_id", agent_id)
+          .order("created_at", { ascending: false });
+        const container = document.getElementById("agentMessages");
+        container.innerHTML = "";
 
         if (error) {
           console.error(error);
-          alert("❌ فشل في حفظ الملاحظة");
-        } else {
-          alert("✅ تم حفظ/تحديث الملاحظة بنجاح");
-          noteInput.value = "";
+          container.innerHTML = "<p>❌ حدث خطأ أثناء جلب الرسائل</p>";
+          return;
         }
-      };
-      window.searchCustomer = function () {
-        const phone = document.getElementById("searchPhone").value.trim();
-        if (!phone) return alert("⚠️ أدخل رقم العميل للبحث");
+        if (!messages || messages.length === 0) {
+          container.innerHTML = "<p>📭 لا توجد رسائل حالياً</p>";
+          return;
+        }
 
-        // نبحث عن الصف بناءً على رقم الهاتف
-        const rows = document.querySelectorAll("tr");
-        let found = false;
-
-        rows.forEach((row) => {
-          if (row.innerText.includes(phone)) {
-            row.scrollIntoView({ behavior: "smooth", block: "center" });
-            row.style.backgroundColor = "#ffffcc"; // تمييز الصف
-            found = true;
-
-            // رجّع اللون الأصلي بعد 3 ثواني
-            setTimeout(() => {
-              row.style.backgroundColor = "";
-            }, 3000);
-          }
+        messages.forEach((msg) => {
+          const div = document.createElement("div");
+          div.className = "agent-message";
+          div.style.cssText = `
+      position: relative;
+      background: #ecf0f1;
+      padding: 10px 15px;
+      margin: 10px 0;
+      border-radius: 6px;
+      font-size: 15px;
+      line-height: 1.4;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+    `;
+          div.innerHTML = `
+      <strong style="font-size:18px;color:#333;">${msg.title}</strong><br/>
+      ${msg.body}<br/>
+      <span style="font-size:14px;color:#777;">
+        ${new Date(msg.created_at).toLocaleString()}
+      </span>
+      <button 
+        class="delete-msg-button"
+        style="
+            position:absolute;
+            top:10px;
+            left:10px;
+            padding:3px 7px;
+            font-size:12px;
+            cursor:pointer;"
+        data-message-id="${msg.id}">❌</button>`;
+          container.appendChild(div);
         });
 
-        if (!found) alert("❌ لم يتم العثور على العميل");
-      };
+        // التعامل مع حدث الحذف
+        document.querySelectorAll(".delete-msg-button").forEach((btn) => {
+          btn.addEventListener("click", async (e) => {
+            const id = e.currentTarget.getAttribute("data-message-id");
+            await deleteAgentMessage(id, agent_id);
+          });
+        });
+      }
+
+      async function deleteAgentMessage(messageId, agent_id) {
+        if (!confirm("❓ هل أنت متأكد من حذف هذه الرسالة؟")) return;
+
+        const { error } = await supabase
+          .from("messages")
+          .delete()
+          .eq("id", messageId);
+        if (error) {
+          alert("❌ حدث خطأ أثناء حذف الرسالة");
+          console.error(error);
+          return;
+        }
+
+        alert("✅ تم حذف الرسالة بنجاح");
+        await loadAgentMessages(agent_id);
+      }
+
+      function showRandomMotivationalMessage() {
+        const messages = [
+          "💪 يوم جديد، تحدٍ جديد! أنت قدها!",
+          "🌟 كل فاتورة يتم تحصيلها، تقربنا من الهدف!",
+          "🚀 استمر، نجاحك على بعد خطوة!",
+          "☕ خذ نفسًا عميقًا، ثم عد لإتمام مهمتك بنجاح!",
+          "🎯 التركيز على الهدف هو مفتاح النجاح!",
+          "🌞 يوم سعيد ومليء بالتحصيل!",
+          "🔥 لا تتوقف، كل تحصيل يقربك من القمة!",
+          "⏳ الوقت كالسيف، استغل كل دقيقة في إنجاز جديد!",
+          "💼 النجاح يبدأ بخطوة، استمر في التقدم!",
+          "📝 كل ملاحظة تكتبها تزيد من احترافيتك!",
+          "💡 كل فكرة جديدة تقودك للتميز!",
+          "⚡ اجعل يومك مليئًا بالطاقة الإيجابية!",
+          "👑 أنت قائد نجاحك، خليك قدها!",
+          "📈 كل مبلغ بتحصله هو نجاح جديد يُحسب لك!",
+          "🤝 تعاونك مع الفريق سرّ نجاحك!",
+          "🌟 لا تنسَ... الإنجاز الصغير يصنع الفرق الكبير!",
+        ];
+        const box = document.getElementById("sideMotivationalBox");
+        const randomMessage =
+          messages[Math.floor(Math.random() * messages.length)];
+        box.textContent = randomMessage;
+        box.style.display = "block";
+        setTimeout(() => {
+          box.style.display = "none";
+        }, 10000);
+      }
+
+      // ✅ البحث على الاسم أو الرقم
+      const searchButton = document.getElementById("searchButton");
+      const searchInput = document.getElementById("searchInput");
+
+      searchButton.addEventListener("click", () => {
+        const query = searchInput.value.trim();
+        if (!query) {
+          alert("⚠️ أدخل الاسم أو الرقم للبحث");
+          return;
+        }
+        const filtered = customersData.filter(
+          (c) => c.name.includes(query) || c.phone.includes(query)
+        );
+        if (!filtered.length) {
+          alert("❌ لم يتم العثور على عملاء");
+          return;
+        }
+        displayCustomers(filtered);
+      });
     </script>
   </body>
 </html>
