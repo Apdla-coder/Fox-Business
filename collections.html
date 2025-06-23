@@ -4,123 +4,222 @@
     <meta charset="UTF-8" />
     <title>تحصيل العملاء</title>
     <style>
+      /* =========================
+       ⚡️ الأساسات العامة
+       ========================= */
       body {
         margin: 0;
-        padding: 0;
         font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
         background: linear-gradient(135deg, #2c3e50, #4ca1af);
+        color: #333;
         min-height: 100vh;
         display: flex;
         flex-direction: column;
         align-items: center;
       }
+      h1,
+      h3 {
+        text-align: center;
+        color: #fff;
+        font-weight: bold;
+      }
+      /* =========================
+       ⚡️ عنصر الرسالة الجانبية
+       ========================= */
       #sideMotivationalBox {
         position: fixed;
         top: 100px;
         left: 20px;
-        padding: 15px;
-        background: orange;
-        color: white;
+        padding: 20px;
+        background: #ff9800;
+        color: #fff;
         border-radius: 8px;
         font-size: 14px;
         font-weight: bold;
         max-width: 180px;
-        box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.15);
+        box-shadow: 0px 3px 12px rgba(0, 0, 0, 0.2);
         z-index: 1000;
       }
-      h1 {
-        color: #fff;
-        margin: 30px 0 20px;
-      }
+      /* =========================
+       ⚡️ الجدول
+       ========================= */
       .table-container {
         background: #ffffff;
-        padding: 20px;
+        padding: 25px;
         border-radius: 15px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        box-shadow: 0 12px 35px rgba(0, 0, 0, 0.25);
         width: 90%;
         max-width: 1000px;
         overflow-x: auto;
+        margin: 20px 0;
       }
       table {
         width: 100%;
         border-collapse: collapse;
+        font-size: 15px;
+        direction: rtl;
       }
       th,
       td {
         padding: 15px 10px;
         text-align: center;
         border-bottom: 1px solid #ddd;
-        font-size: 15px;
       }
       th {
-        background-color: #f0f0f0;
+        background-color: #f7f7f7;
+        font-weight: bold;
         color: #333;
       }
+      /* =========================
+       ⚡️ الأزرار
+       ========================= */
       button {
-        padding: 8px 16px;
+        padding: 10px 16px;
         background: #27ae60;
         border: none;
-        color: white;
+        color: #fff;
         border-radius: 8px;
         font-weight: bold;
         cursor: pointer;
-        transition: 0.3s;
+        transition: 0.3s ease;
       }
       button:hover {
         background: #1e8449;
       }
+      /* =========================
+       ⚡️ لودينج
+       ========================= */
       .loading-overlay {
         position: fixed;
         top: 0;
         left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.3);
+        width: 100vw;
+        height: 100vh;
         display: none;
         align-items: center;
         justify-content: center;
         z-index: 9999;
+        background: rgba(0, 0, 0, 0.3);
       }
       .spinner {
         border: 6px solid #f3f3f3;
         border-top: 6px solid #27ae60;
         border-radius: 50%;
-        width: 50px;
-        height: 50px;
+        width: 55px;
+        height: 55px;
         animation: spin 1s linear infinite;
       }
       @keyframes spin {
-        0% {
-          transform: rotate(0deg);
-        }
         100% {
           transform: rotate(360deg);
         }
       }
-    </style>
-  </head>
-  <body>
-    <header
-      style="
+      /* =========================
+       ⚡️ رأس الصفحة
+       ========================= */
+      header {
         background: linear-gradient(45deg, #2c3e50, #4ca1af);
         padding: 15px 30px;
         display: flex;
         align-items: center;
         justify-content: space-between;
         color: #fff;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-        border-bottom-left-radius: 10px;
-        border-bottom-right-radius: 10px;
-      "
-    >
-      <div style="display: flex; align-items: center">
+        box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.25);
+        border-bottom-left-radius: 12px;
+        border-bottom-right-radius: 12px;
+      }
+      header h2 {
+        margin: 0;
+        font-size: 22px;
+        font-weight: bold;
+      }
+      header .logo {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+      }
+      header .logo img {
+        height: 50px;
+        border-radius: 8px;
+      }
+      /* =========================
+       ⚡️ الرسالة الجماعية
+       ========================= */
+      #bulkSMSContainer {
+        padding: 20px;
+        background: #f9f9f9;
+        border-radius: 10px;
+        max-width: 1000px;
+        margin: 20px auto;
+        text-align: right;
+        box-shadow: 0px 4px 18px rgba(0, 0, 0, 0.1);
+      }
+      #bulkMessageText {
+        width: 100%;
+        height: 100px;
+        padding: 10px;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+        font-size: 14px;
+      }
+      #sendBulkSMS {
+        padding: 12px 20px;
+        font-size: 14px;
+        border-radius: 5px;
+        border: none;
+        background: #3498db;
+        color: #fff;
+        cursor: pointer;
+        font-weight: bold;
+      }
+      #sendBulkSMS:hover {
+        background: #297fb8;
+      }
+      /* =========================
+       ⚡️ شريط البحث
+       ========================= */
+      #searchBarContainer {
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        background-color: #fff;
+        padding: 15px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 12px;
+        box-shadow: 0px 3px 12px rgba(0, 0, 0, 0.1);
+      }
+      #searchInput {
+        padding: 12px;
+        flex: 1;
+        max-width: 300px;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        font-size: 14px;
+      }
+      #searchButton {
+        padding: 12px 20px;
+        font-size: 14px;
+        border-radius: 8px;
+        font-weight: bold;
+        background: #27ae60;
+        color: #fff;
+        border: none;
+        cursor: pointer;
+      }
+      #searchButton:hover {
+        background: #1e8449;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="logo">
         <a href="./index.html"
-          ><img
-            src="./Orange_logo.svg.png"
-            alt="Logo"
-            style="height: 50px; margin-left: 15px; border-radius: 8px"
+          ><img src="./Orange_logo.svg.png" alt="Logo"
         /></a>
-        <h2 style="margin: 0">فوكس بيزنيس</h2>
+        <h2>فوكس بيزنيس</h2>
       </div>
       <div style="font-size: 16px">نظام إدارة التحصيل</div>
     </header>
@@ -128,26 +227,49 @@
     <h1>العملاء المطلوب تحصيلهم</h1>
     <div id="sideMotivationalBox"></div>
     <div id="agentMessages" style="margin: 20px 0"></div>
-    <h3 id="totalDue" style="text-align: center; color: #fff">
-      المبلغ المتبقي: ...
-    </h3>
-    <h3 id="collectedAmount" style="text-align: center; color: #fff">
-      المبلغ المحصل: 0.00 ج.م
-    </h3>
+    <h3 id="totalDue">المبلغ المتبقي: ...</h3>
+    <h3 id="collectedAmount">المبلغ المحصل: 0.00 ج.م</h3>
 
-    <!-- خانة البحث -->
-    <input
-      type="text"
-      id="searchInput"
-      placeholder="اكتب الاسم أو الرقم للبحث..."
+    <div id="bulkSMSContainer">
+      <h3>📤 إرسال رسالة جماعية للعملاء (SMS)</h3>
+      <textarea
+        id="bulkMessageText"
+        placeholder="اكتب نص الرسالة هنا..."
+      ></textarea>
+      <div style="margin: 15px 0">
+        <button id="sendBulkSMS">💬 إرسال عبر SMS</button>
+      </div>
+    </div>
+
+    <div id="searchBarContainer">
+      <input
+        type="text"
+        id="searchInput"
+        placeholder="اكتب الاسم أو الرقم للبحث..."
+      />
+      <button id="searchButton">🔍 بحث</button>
+    </div>
+
+    <!-- زر السهم للرجوع لأعلى -->
+    <button
+      id="scrollToTopBtn"
       style="
-        padding: 10px;
-        width: 300px;
-        margin-bottom: 15px;
-        border-radius: 8px;
+        position: fixed;
+        bottom: 30px;
+        left: 30px;
+        font-size: 24px;
+        padding: 12px 15px;
+        border-radius: 50%;
+        border: none;
+        background-color: #3498db;
+        color: #fff;
+        cursor: pointer;
+        display: none;
+        z-index: 1001;
       "
-    />
-    <button id="searchButton">🔍 بحث</button>
+    >
+      ⬆️
+    </button>
 
     <div class="table-container">
       <table>
@@ -187,15 +309,23 @@
 
     <!-- ⚡️ السكربت النهائي ⚡️ -->
     <script type="module">
+      // ===========================================================
+      // ⚡️ 1️⃣ الاتصال بقاعدة البيانات
+      // ===========================================================
       import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
-
       const supabase = createClient(
         "https://vyhtsdqccyvygelekzey.supabase.co",
         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5aHRzZHFjY3l2eWdlbGVremV5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk3NTQwOTMsImV4cCI6MjA2NTMzMDA5M30.bRjHD6OkziXjfavEX-tA-6IFdag7KoFBqLRgNLqwcdg"
       );
 
+      // ===========================================================
+      // ⚡️ 2️⃣ تعريف المتغيرات العامة
+      // ===========================================================
       let customersData = [];
 
+      // ===========================================================
+      // ⚡️ 3️⃣ تشغيل الوظائف عند تحميل الصفحة
+      // ===========================================================
       window.onload = async function () {
         const agent_id = localStorage.getItem("agent_id");
         if (!agent_id) {
@@ -207,17 +337,21 @@
         showRandomMotivationalMessage();
       };
 
+      // ===========================================================
+      // ⚡️ 4️⃣ جلب العملاء من الجدول
+      // ===========================================================
       async function loadCustomers(agent_id) {
         const table = document.getElementById("customersTable");
         const loading = document.getElementById("loadingOverlay");
         loading.style.display = "flex";
 
+        // 👇 جلب البيانات من الجدول وترتيبها
         const { data, error } = await supabase
           .from("customers")
           .select("*")
           .eq("agent_id", agent_id)
-          .order("section", { ascending: true })
-          .order("created_at", { ascending: true });
+          .order("section", { ascending: true }) // ترتيب على القسم
+          .order("created_at", { ascending: true }); // ثم على التاريخ (لو موجود)
 
         if (error) {
           alert("⚠️ حدث خطأ أثناء تحميل العملاء");
@@ -226,98 +360,146 @@
           return;
         }
 
+        // ✅ لو مافيش created_at، يمكن استخدام id كخيار احتياطي
+        if (data.length && !data[0]?.created_at) {
+          data.sort((a, b) => a.id - b.id);
+        }
+
         customersData = data;
+
+        // 👇 عرض العملاء وتحميل المبالغ
         displayCustomers(data);
         await loadAmounts(agent_id);
+
         loading.style.display = "none";
       }
 
+      // ===========================================================
+      // ⚡️ دالة تنسيق رقم الهاتف لواتساب (للأرقام المصرية)
+      // ===========================================================
+      // ⚡️ دالة تنسيق رقم الهاتف لواتساب (للأرقام المصرية)
+      // ===========================================================
+      function getWhatsAppLink(phone) {
+        let formatted = phone.replace(/\D/g, ""); // نزيل المحارف غير الرقمية
+
+        // لو مكون من 10 أرقام، نضيف صفر
+        if (formatted.length === 10) {
+          formatted = "0" + formatted;
+        }
+
+        // لو بيبدأ بـ 0 ➔ نضيف 20
+        if (formatted.startsWith("0")) {
+          formatted = "20" + formatted.slice(1);
+        }
+        // لو مابدأش بـ 20 ➔ نضيفها
+        else if (!formatted.startsWith("20")) {
+          formatted = "20" + formatted;
+        }
+
+        return `https://web.whatsapp.com/send?phone=${formatted}`;
+      }
+
+      // ===========================================================
+      // ⚡️ 6️⃣ عرض العملاء على الجدول
+      // ===========================================================
       function displayCustomers(data) {
         const table = document.getElementById("customersTable");
         table.innerHTML = ""; // تفريغ الجدول
         let totalDue = 0;
+
+        const pendingCustomers = data.filter(
+          (c) => c.collection_status !== "تم التحصيل"
+        );
+        const collectedCustomers = data.filter(
+          (c) => c.collection_status === "تم التحصيل"
+        );
+
         let lastSection = null;
 
-        data.forEach((customer) => {
+        // 👇 العملاء غير المحصلين
+        pendingCustomers.forEach((customer) => {
           totalDue += customer.due_amount || 0;
 
+          // ✅ سطر عنوان القسم
           if (customer.section !== lastSection) {
             const sectionRow = document.createElement("tr");
             sectionRow.innerHTML = `
-        <td colspan="6" style="background:#eee; font-weight:bold;text-align:right;padding:10px;">
+        <td colspan="7" style="background:#eee; font-weight:bold;text-align:right;padding:10px;">
             📌 القسم: ${customer.section || "غير محدد"}
         </td>`;
             table.appendChild(sectionRow);
             lastSection = customer.section;
           }
 
-          const isCollected = customer.collection_status === "تم التحصيل";
+          const phoneLink = getWhatsAppLink(customer.phone);
           const row = document.createElement("tr");
           row.id = `row_${customer.id}`;
-          row.style.opacity = isCollected ? "0.5" : "1";
 
           row.innerHTML = `
       <td>${customer.name}</td>
-      <td>${customer.phone}</td>
+      <td >${customer.phone}
+        <a  href="${phoneLink}" target="_blank" title="التحدث على واتساب">whatsapp📞</a>
+      </td>
       <td>${customer.address || ""}</td>
       <td>${customer.due_amount} ج.م</td>
+      <td><button id="btn_${customer.id}" onClick="collect('${customer.id}', ${
+            customer.due_amount
+          })">تحصيل</button></td>
       <td>
-        <button id="btn_${customer.id}" ${isCollected ? "disabled" : ""} 
-                onClick="collect('${customer.id}', ${customer.due_amount})">
-                ${isCollected ? "تم" : "تحصيل"}
-        </button>
-      </td>
-      <td>
-        <textarea id="note_${customer.id}" placeholder="اكتب الملاحظة هنا..."
-           style="width:150px;height:40px;"></textarea><br/>
+        <textarea id="note_${
+          customer.id
+        }" placeholder="اكتب الملاحظة هنا..." style="width:150px;height:40px;"></textarea><br/>
         <button onClick="saveNote('${customer.id}','${customer.name}','${
             customer.phone
-          }')">
-           💬 حفظ
-        </button>
+          }')">💬 حفظ</button>
       </td>`;
           table.appendChild(row);
         });
+
+        // 👇 العملاء المحصلين
+        if (collectedCustomers.length > 0) {
+          const collectedHeader = document.createElement("tr");
+          collectedHeader.innerHTML = `
+      <td colspan="7" style="background:#d4edda; font-weight:bold;text-align:right;padding:10px;">
+        ✅ تم التحصيل
+      </td>`;
+          table.appendChild(collectedHeader);
+
+          collectedCustomers.forEach((customer) => {
+            const phoneLink = getWhatsAppLink(customer.phone);
+            const row = document.createElement("tr");
+            row.id = `row_${customer.id}`;
+            row.style.opacity = "0.5";
+
+            row.innerHTML = `
+        <td>${customer.name}</td>
+        <td>${customer.phone}
+            <a href="${phoneLink}" target="_blank" title="التحدث على واتساب">📞</a>
+        </td>
+        <td>${customer.address || ""}</td>
+        <td>${customer.due_amount} ج.م</td>
+        <td><button id="btn_${customer.id}" disabled>تم</button></td>
+        <td>
+            <textarea id="note_${
+              customer.id
+            }" placeholder="اكتب الملاحظة هنا..." style="width:150px;height:40px;"></textarea><br/>
+            <button onClick="saveNote('${customer.id}','${customer.name}','${
+              customer.phone
+            }')">💬 حفظ</button>
+        </td>`;
+            table.appendChild(row);
+          });
+        }
+
+        // ✅ تحديث الإجمالي
         document.getElementById(
           "totalDue"
         ).innerText = `المبلغ المتبقي: ${totalDue.toFixed(2)} ج.م`;
       }
 
-      // ✅ التحصيل
-      window.collect = async function (customer_id, due_amount) {
-        if (!confirm("هل تريد تأكيد التحصيل؟")) return;
-
-        const btn = document.getElementById(`btn_${customer_id}`);
-        btn.disabled = true;
-        btn.innerText = "جاري التحصيل...";
-
-        const agent_id = localStorage.getItem("agent_id");
-        try {
-          await supabase
-            .from("collections")
-            .insert([
-              { customer_id, amount: due_amount, collected_by: agent_id },
-            ]);
-          await supabase
-            .from("customers")
-            .update({ collection_status: "تم التحصيل" })
-            .eq("id", customer_id);
-
-          alert("✅ تم التحصيل بنجاح");
-
-          // تحديث مظهر العنصر بدلًا من إزالته
-          const row = document.getElementById(`row_${customer_id}`);
-          row.style.opacity = "0.5";
-          btn.innerText = "تم";
-          btn.disabled = true;
-        } catch (error) {
-          alert("❌ حدث خطأ أثناء عملية التحصيل");
-          console.error(error);
-          btn.disabled = false;
-          btn.innerText = "تحصيل";
-        }
-      };
-
+      // ===========================================================
+      // ⚡️ 7️⃣ حفظ ملاحظة على العميل
+      // ===========================================================
       window.saveNote = async function (
         customer_id,
         customer_name,
@@ -346,6 +528,9 @@
         }
       };
 
+      // ===========================================================
+      // ⚡️ 8️⃣ تحميل المبالغ المحصلة
+      // ===========================================================
       async function loadAmounts(agent_id) {
         const [{ data: collections }, { data: messages }] = await Promise.all([
           supabase
@@ -368,6 +553,9 @@
         ).innerText = `المبلغ المحصل: ${collectedAmount.toFixed(2)} ج.م`;
       }
 
+      // ===========================================================
+      // ⚡️ 9️⃣ تحميل الرسائل للوكيل
+      // ===========================================================
       async function loadAgentMessages(agent_id) {
         const { data: messages, error } = await supabase
           .from("messages")
@@ -410,15 +598,8 @@
       <span style="font-size:14px;color:#777;">
         ${new Date(msg.created_at).toLocaleString()}
       </span>
-      <button 
-        class="delete-msg-button"
-        style="
-            position:absolute;
-            top:10px;
-            left:10px;
-            padding:3px 7px;
-            font-size:12px;
-            cursor:pointer;"
+      <button class="delete-msg-button"
+        style="position:absolute;top:10px;left:10px;padding:3px 7px;font-size:12px;cursor:pointer;"
         data-message-id="${msg.id}">❌</button>`;
           container.appendChild(div);
         });
@@ -432,6 +613,9 @@
         });
       }
 
+      // ===========================================================
+      // ⚡️ 10️⃣ حذف رسالة
+      // ===========================================================
       async function deleteAgentMessage(messageId, agent_id) {
         if (!confirm("❓ هل أنت متأكد من حذف هذه الرسالة؟")) return;
 
@@ -449,6 +633,9 @@
         await loadAgentMessages(agent_id);
       }
 
+      // ===========================================================
+      // ⚡️ 11️⃣ الرسالة المحفزة
+      // ===========================================================
       function showRandomMotivationalMessage() {
         const messages = [
           "💪 يوم جديد، تحدٍ جديد! أنت قدها!",
@@ -478,7 +665,9 @@
         }, 10000);
       }
 
-      // ✅ البحث على الاسم أو الرقم
+      // ===========================================================
+      // ⚡️ 12️⃣ البحث على الاسم أو الرقم
+      // ===========================================================
       const searchButton = document.getElementById("searchButton");
       const searchInput = document.getElementById("searchInput");
 
@@ -496,6 +685,44 @@
           return;
         }
         displayCustomers(filtered);
+      });
+
+      // ===========================================================
+      // ⚡️ 13️⃣ السهم للعودة لأعلى
+      // ===========================================================
+      const scrollToTopBtn = document.getElementById("scrollToTopBtn");
+
+      window.addEventListener("scroll", () => {
+        if (window.scrollY > 300) {
+          scrollToTopBtn.style.display = "block";
+        } else {
+          scrollToTopBtn.style.display = "none";
+        }
+      });
+
+      scrollToTopBtn.addEventListener("click", () => {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+
+      // ===========================================================
+      // ⚡️ 14️⃣ إرسال رسالة جماعية SMS
+      // ===========================================================
+      const sendBulkSMS = document.getElementById("sendBulkSMS");
+      sendBulkSMS?.addEventListener("click", async () => {
+        const message = document.getElementById("bulkMessageText").value.trim();
+        if (!message) {
+          alert("⚠️ برجاء كتابة نص الرسالة أولًا");
+          return;
+        }
+        const phoneNumbers = customersData.map((c) => c.phone).filter(Boolean);
+        if (!phoneNumbers.length) {
+          alert("❌ لا توجد أرقام عملاء");
+          return;
+        }
+        const smsUrl = `sms:${phoneNumbers.join(",")}?body=${encodeURIComponent(
+          message
+        )}`;
+        window.location.href = smsUrl;
       });
     </script>
   </body>
