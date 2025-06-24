@@ -399,18 +399,37 @@
       // ✅ 4. تحميل جدول المناديب
       async function loadAgentsData() {
         try {
-          const { data: agents } = await supabase
-            .from("agents_summary")
+          const { data: agents, error: agentsError } = await supabase
+            .from("agents")
             .select("*");
+
+          if (agentsError) {
+            console.error(agentsError);
+            alert("❌ حدث خطأ أثناء جلب بيانات المناديب");
+            return;
+          }
+
           const table = document.getElementById("agentsTable");
-          table.innerHTML = ""; // تفريغ الجدول قبل ملء البيانات
+          table.innerHTML = "";
+
+          // التاريخ الحالي
+          const today = new Date();
+          const todayString = today.toISOString().split("T")[0];
 
           for (const agent of agents) {
-            const { data: agentCustomers } = await supabase
-              .from("customers")
-              .select("due_amount, collection_status")
-              .eq("agent_id", agent.agent_id);
+            // العملاء التابعين للمندوب
+            const { data: agentCustomers, error: customersError } =
+              await supabase
+                .from("customers")
+                .select("due_amount, collection_status")
+                .eq("agent_id", agent.id);
 
+            if (customersError) {
+              console.error(customersError);
+              continue;
+            }
+
+            // إجمالي المحصل على الإطلاق
             let totalCollectedAll = 0;
             let totalPendingAll = 0;
 
@@ -421,32 +440,56 @@
                 totalPendingAll += c.due_amount || 0;
               }
             });
+
             const agentInvoicesAllTime = agentCustomers?.length || 0;
             const agentCollectedInvoicesAllTime = agentCustomers.filter(
               (c) => c.collection_status === "تم التحصيل"
             ).length;
 
+            // المحصل اليوم من الجدول collections
+            const { data: agentCollectionsToday, error: collectionsError } =
+              await supabase
+                .from("collections")
+                .select("amount, collection_date")
+                .eq("collected_by", agent.id)
+                .gte("collection_date", todayString) // بداية اليوم
+                .lt("collection_date", todayString + "T23:59:59"); // نهاية اليوم
+
+            if (collectionsError) {
+              console.error(collectionsError);
+              continue;
+            }
+
+            const collectedTodayCount = agentCollectionsToday?.length || 0;
+            const collectedTodayAmount = agentCollectionsToday?.reduce(
+              (sum, item) => sum + (item.amount || 0),
+              0
+            );
+
+            // إنشاء صف الجدول
             const row = document.createElement("tr");
             row.innerHTML = `
-            <td><a href="agent_customers.html?agent_id=${agent.agent_id}">${
-              agent.agent_name
+        <td><a href="agent_customers.html?agent_id=${agent.id}">${
+              agent.name
             }</a></td>
-            <td>${agent.collected_invoices_today}</td>
-            <td>${agent.collected_amount_today} ج.م</td>
-            <td>${agentInvoicesAllTime} فاتورة</td>
-            <td>${agentCollectedInvoicesAllTime} فاتورة</td>
-            <td>${totalCollectedAll.toFixed(2)} ج.م</td>
-            <td>${totalPendingAll.toFixed(2)} ج.م</td>
-            <td>${agent.collected_invoices_today > 0 ? "✅" : "⏳"}</td>
-            <td>${
-              agent.last_login
-                ? new Date(agent.last_login).toLocaleString()
-                : "لم يسجل بعد"
-            }</td>`;
+        <td>${collectedTodayCount}</td>
+        <td>${collectedTodayAmount.toFixed(2)} ج.م</td>
+        <td>${agentInvoicesAllTime} فاتورة</td>
+        <td>${agentCollectedInvoicesAllTime} فاتورة</td>
+        <td>${totalCollectedAll.toFixed(2)} ج.م</td>
+        <td>${totalPendingAll.toFixed(2)} ج.م</td>
+        <td>${collectedTodayCount > 0 ? "✅" : "⏳"}</td>
+        <td>${
+          agent.last_login
+            ? new Date(agent.last_login).toLocaleString()
+            : "لم يسجل بعد"
+        }</td>
+      `;
             table.appendChild(row);
           }
         } catch (err) {
           console.error("Error loading agents:", err);
+          alert("❌ حدث خطأ غير متوقع أثناء تحميل الجدول");
         }
       }
 

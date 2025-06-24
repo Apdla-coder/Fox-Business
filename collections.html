@@ -307,152 +307,54 @@
 
       let customersData = [];
 
-      window.onload = async function () {
+      // ⚡️ تحصيل فاتورة
+      window.collect = async function (customer_id, due_amount) {
         const agent_id = localStorage.getItem("agent_id");
         if (!agent_id) {
           alert("❌ليس لديك صلاحية");
           return;
         }
-        await loadCustomers(agent_id);
-        await loadAgentMessages(agent_id);
-        showRandomMotivationalMessage();
-      };
-
-      async function loadCustomers(agent_id) {
-        const table = document.getElementById("customersTable");
-        const loading = document.getElementById("loadingOverlay");
-        loading.style.display = "flex";
-
-        const { data, error } = await supabase
-          .from("customers")
-          .select("*")
-          .eq("agent_id", agent_id)
-          .order("section", { ascending: true })
-          .order("created_at", { ascending: true });
-
-        if (error) {
-          alert("⚠️ حدث خطأ أثناء تحميل العملاء");
-          console.error(error);
-          loading.style.display = "none";
+        if (
+          !confirm(`✅ هل أنت متأكد من تحصيل ${due_amount} ج.م من هذا العميل؟`)
+        )
           return;
-        }
 
-        if (data.length && !data[0]?.created_at) {
-          data.sort((a, b) => a.id - b.id);
-        }
+        try {
+          const { error: updateError } = await supabase
+            .from("customers")
+            .update({
+              collection_status: "تم التحصيل",
+            })
+            .eq("id", customer_id);
 
-        customersData = data;
-
-        displayCustomers(data);
-        await loadAmounts(agent_id);
-
-        loading.style.display = "none";
-      }
-
-      function getWhatsAppLink(phone) {
-        let formatted = phone.replace(/\D/g, "");
-        if (formatted.length === 10) {
-          formatted = "0" + formatted;
-        }
-        if (formatted.startsWith("0")) {
-          formatted = "20" + formatted.slice(1);
-        } else if (!formatted.startsWith("20")) {
-          formatted = "20" + formatted;
-        }
-        return `https://wa.me/${formatted}`;
-      }
-
-      function displayCustomers(data) {
-        const table = document.getElementById("customersTable");
-        table.innerHTML = "";
-        let totalDue = 0;
-
-        const pendingCustomers = data.filter(
-          (c) => c.collection_status !== "تم التحصيل"
-        );
-        const collectedCustomers = data.filter(
-          (c) => c.collection_status === "تم التحصيل"
-        );
-
-        let lastSection = null;
-
-        pendingCustomers.forEach((customer) => {
-          totalDue += customer.due_amount || 0;
-
-          if (customer.section !== lastSection) {
-            const sectionRow = document.createElement("tr");
-            sectionRow.innerHTML = `
-        <td colspan="7" style="background:#eee; font-weight:bold;text-align:right;padding:10px;">
-            📌 القسم: ${customer.section || "غير محدد"}
-        </td>`;
-            table.appendChild(sectionRow);
-            lastSection = customer.section;
+          if (updateError) {
+            alert("❌ حدث خطأ أثناء تحديث الحالة");
+            console.error(updateError);
+            return;
           }
 
-          const phoneLink = getWhatsAppLink(customer.phone);
-          const row = document.createElement("tr");
-          row.id = `row_${customer.id}`;
+          const { error: insertError } = await supabase
+            .from("collections")
+            .insert([
+              { collected_by: agent_id, customer_id, amount: due_amount },
+            ]);
 
-          row.innerHTML = `
-      <td>${customer.name}</td>
-      <td>${customer.phone}
-        <a href="${phoneLink}" target="_blank" title="التحدث على واتساب">whatsapp📞</a>
-      </td>
-      <td>${customer.address || ""}</td>
-      <td>${customer.due_amount} ج.م</td>
-      <td><button id="btn_${customer.id}" onClick="collect('${customer.id}', ${
-            customer.due_amount
-          })">تحصيل</button></td>
-      <td>
-        <textarea id="note_${
-          customer.id
-        }" placeholder="اكتب الملاحظة هنا..." style="width:150px;height:40px;"></textarea><br/>
-        <button onClick="saveNote('${customer.id}','${customer.name}','${
-            customer.phone
-          }')">💬 حفظ</button>
-      </td>`;
-          table.appendChild(row);
-        });
+          if (insertError) {
+            alert("❌ حدث خطأ أثناء تسجيل التحصيل");
+            console.error(insertError);
+            return;
+          }
 
-        if (collectedCustomers.length > 0) {
-          const collectedHeader = document.createElement("tr");
-          collectedHeader.innerHTML = `
-      <td colspan="7" style="background:#d4edda; font-weight:bold;text-align:right;padding:10px;">
-        ✅ تم التحصيل
-      </td>`;
-          table.appendChild(collectedHeader);
-
-          collectedCustomers.forEach((customer) => {
-            const phoneLink = getWhatsAppLink(customer.phone);
-            const row = document.createElement("tr");
-            row.id = `row_${customer.id}`;
-            row.style.opacity = "0.5";
-
-            row.innerHTML = `
-        <td>${customer.name}</td>
-        <td>${customer.phone}
-            <a href="${phoneLink}" target="_blank" title="التحدث على واتساب">📞</a>
-        </td>
-        <td>${customer.address || ""}</td>
-        <td>${customer.due_amount} ج.م</td>
-        <td><button id="btn_${customer.id}" disabled>تم</button></td>
-        <td>
-            <textarea id="note_${
-              customer.id
-            }" placeholder="اكتب الملاحظة هنا..." style="width:150px;height:40px;"></textarea><br/>
-            <button onClick="saveNote('${customer.id}','${customer.name}','${
-              customer.phone
-            }')">💬 حفظ</button>
-        </td>`;
-            table.appendChild(row);
-          });
+          alert("✅ تم تحصيل الفاتورة بنجاح");
+          await loadCustomers(agent_id);
+          await loadAmounts(agent_id);
+        } catch (error) {
+          console.error(error);
+          alert("❌ حدث خطأ غير متوقع أثناء التحصيل");
         }
+      };
 
-        document.getElementById(
-          "totalDue"
-        ).innerText = `المبلغ المتبقي: ${totalDue.toFixed(2)} ج.م`;
-      }
-
+      // ⚡️ حفظ ملاحظة
       window.saveNote = async function (
         customer_id,
         customer_name,
@@ -481,6 +383,141 @@
         }
       };
 
+      // ⚡️ تحميل العملاء
+      async function loadCustomers(agent_id) {
+        const table = document.getElementById("customersTable");
+        const loading = document.getElementById("loadingOverlay");
+        loading.style.display = "flex";
+
+        const { data, error } = await supabase
+          .from("customers")
+          .select("*")
+          .eq("agent_id", agent_id)
+          .order("section", { ascending: true })
+          .order("created_at", { ascending: true });
+        if (error) {
+          alert("⚠️ حدث خطأ أثناء تحميل العملاء");
+          console.error(error);
+          loading.style.display = "none";
+          return;
+        }
+
+        if (data.length && !data[0]?.created_at) {
+          data.sort((a, b) => a.id - b.id);
+        }
+
+        customersData = data;
+
+        displayCustomers(data);
+        await loadAmounts(agent_id);
+        loading.style.display = "none";
+      }
+
+      // ⚡️ رابط واتساب
+      function getWhatsAppLink(phone) {
+        let formatted = phone.replace(/\D/g, "");
+        if (formatted.length === 10) formatted = "0" + formatted;
+        if (formatted.startsWith("0")) {
+          formatted = "20" + formatted.slice(1);
+        } else if (!formatted.startsWith("20")) {
+          formatted = "20" + formatted;
+        }
+        return `https://wa.me/${formatted}`;
+      }
+
+      // ⚡️ عرض العملاء
+      function displayCustomers(data) {
+        const table = document.getElementById("customersTable");
+        table.innerHTML = "";
+        let totalDue = 0;
+
+        const pendingCustomers = data.filter(
+          (c) => c.collection_status !== "تم التحصيل"
+        );
+        const collectedCustomers = data.filter(
+          (c) => c.collection_status === "تم التحصيل"
+        );
+
+        let lastSection = null;
+
+        pendingCustomers.forEach((customer) => {
+          totalDue += customer.due_amount || 0;
+
+          if (customer.section !== lastSection) {
+            const sectionRow = document.createElement("tr");
+            sectionRow.innerHTML = `
+            <td colspan="7" style="background:#eee; font-weight:bold;text-align:right;padding:10px;">
+              📌 القسم: ${customer.section || "غير محدد"}
+            </td>`;
+            table.appendChild(sectionRow);
+            lastSection = customer.section;
+          }
+
+          const phoneLink = getWhatsAppLink(customer.phone);
+          const row = document.createElement("tr");
+          row.id = `row_${customer.id}`;
+
+          row.innerHTML = `
+        <td>${customer.name}</td>
+        <td>${customer.phone}
+            <a href="${phoneLink}" target="_blank" title="التحدث على واتساب">whatsapp📞</a>
+        </td>
+        <td>${customer.address || ""}</td>
+        <td>${customer.due_amount} ج.م</td>
+        <td><button id="btn_${customer.id}" onClick="collect('${
+            customer.id
+          }', ${customer.due_amount})">تحصيل</button></td>
+        <td>
+            <textarea id="note_${
+              customer.id
+            }" placeholder="اكتب الملاحظة هنا..." style="width:150px;height:40px;"></textarea><br/>
+            <button onClick="saveNote('${customer.id}','${customer.name}','${
+            customer.phone
+          }')">💬 حفظ</button>
+        </td>`;
+          table.appendChild(row);
+        });
+
+        if (collectedCustomers.length > 0) {
+          const collectedHeader = document.createElement("tr");
+          collectedHeader.innerHTML = `
+        <td colspan="7" style="background:#d4edda; font-weight:bold;text-align:right;padding:10px;">
+            ✅ تم التحصيل
+        </td>`;
+          table.appendChild(collectedHeader);
+
+          collectedCustomers.forEach((customer) => {
+            const phoneLink = getWhatsAppLink(customer.phone);
+            const row = document.createElement("tr");
+            row.id = `row_${customer.id}`;
+            row.style.opacity = "0.5";
+
+            row.innerHTML = `
+            <td>${customer.name}</td>
+            <td>${customer.phone}
+                <a href="${phoneLink}" target="_blank" title="التحدث على واتساب">📞</a>
+            </td>
+            <td>${customer.address || ""}</td>
+            <td>${customer.due_amount} ج.م</td>
+            <td><button id="btn_${customer.id}" disabled>تم</button></td>
+            <td>
+                <textarea id="note_${
+                  customer.id
+                }" placeholder="اكتب الملاحظة هنا..." style="width:150px;height:40px;"></textarea><br/>
+                <button onClick="saveNote('${customer.id}','${
+              customer.name
+            }','${customer.phone}')">💬 حفظ</button>
+            </td>`;
+            table.appendChild(row);
+          });
+        }
+
+        document.getElementById(
+          "totalDue"
+        ).innerText = `المبلغ المتبقي: ${totalDue.toFixed(2)} ج.م`;
+      }
+
+      // ⚡️ تحميل مبالغ المحصل
       async function loadAmounts(agent_id) {
         const [{ data: collections }, { data: messages }] = await Promise.all([
           supabase
@@ -494,7 +531,7 @@
             .order("created_at", { ascending: false }),
         ]);
 
-        let collectedAmount = collections.reduce(
+        const collectedAmount = collections.reduce(
           (sum, c) => sum + (c.amount || 0),
           0
         );
@@ -503,6 +540,7 @@
         ).innerText = `المبلغ المحصل: ${collectedAmount.toFixed(2)} ج.م`;
       }
 
+      // ⚡️ تحميل الرسائل
       async function loadAgentMessages(agent_id) {
         const { data: messages, error } = await supabase
           .from("messages")
@@ -526,28 +564,28 @@
           const div = document.createElement("div");
           div.className = "agent-message";
           div.style.cssText = `
-      position: relative;
-      background: #ecf0f1;
-      padding: 10px 15px;
-      margin: 10px 0;
-      border-radius: 6px;
-      font-size: 15px;
-      line-height: 1.4;
-      white-space: pre-wrap;
-      word-wrap: break-word;
-      width: 100%;
-      max-width: 100%;
-      box-sizing: border-box;
-    `;
+        position: relative;
+        background: #ecf0f1;
+        padding: 10px 15px;
+        margin: 10px 0;
+        border-radius: 6px;
+        font-size: 15px;
+        line-height: 1.4;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+      `;
           div.innerHTML = `
-      <strong style="font-size:18px;color:#333;">${msg.title}</strong><br/>
-      ${msg.body}<br/>
-      <span style="font-size:14px;color:#777;">
-        ${new Date(msg.created_at).toLocaleString()}
-      </span>
-      <button class="delete-msg-button"
-        style="position:absolute;top:10px;left:10px;padding:3px 7px;font-size:12px;cursor:pointer;"
-        data-message-id="${msg.id}">❌</button>`;
+        <strong style="font-size:18px;color:#333;">${msg.title}</strong><br/>
+        ${msg.body}<br/>
+        <span style="font-size:14px;color:#777;">
+          ${new Date(msg.created_at).toLocaleString()}
+        </span>
+        <button class="delete-msg-button"
+            style="position:absolute;top:10px;left:10px;padding:3px 7px;font-size:12px;cursor:pointer;"
+            data-message-id="${msg.id}">❌</button>`;
           container.appendChild(div);
         });
 
@@ -576,6 +614,7 @@
         await loadAgentMessages(agent_id);
       }
 
+      // ⚡️ رسالة عشوائية
       function showRandomMotivationalMessage() {
         const messages = [
           "💪 يوم جديد، تحدٍ جديد! أنت قدها!",
@@ -605,7 +644,7 @@
         }, 10000);
       }
 
-      // ✅ البحث على الاسم أو الرقم
+      // ⚡️ بحث العملاء
       const searchButton = document.getElementById("searchButton");
       const searchInput = document.getElementById("searchInput");
 
@@ -625,65 +664,26 @@
         displayCustomers(filtered);
       });
 
-      // ✅ السهم للعودة لأعلى
+      // ⚡️ السهم للعودة لأعلى
       const scrollToTopBtn = document.getElementById("scrollToTopBtn");
 
       window.addEventListener("scroll", () => {
         scrollToTopBtn.style.display = window.scrollY > 300 ? "block" : "none";
       });
-
       scrollToTopBtn.addEventListener("click", () => {
         window.scrollTo({ top: 0, behavior: "smooth" });
       });
-      // ===========================================================
-      // ⚡️ 15️⃣ تعريف الدالة collect لتحصيل الفاتورة
-      // ===========================================================
-      window.collect = async function (customer_id, due_amount) {
+
+      // ⚡️ تشغيل الصفحة
+      window.onload = async function () {
         const agent_id = localStorage.getItem("agent_id");
         if (!agent_id) {
           alert("❌ليس لديك صلاحية");
           return;
         }
-
-        if (
-          !confirm(`✅ هل أنت متأكد من تحصيل ${due_amount} ج.م من هذا العميل؟`)
-        )
-          return;
-
-        try {
-          // تحديث حالة العميل إلى "تم التحصيل"
-          const { error: updateError } = await supabase
-            .from("customers")
-            .update({ collection_status: "تم التحصيل" })
-            .eq("id", customer_id);
-
-          if (updateError) {
-            alert("❌ حدث خطأ أثناء تحديث الحالة");
-            console.error(updateError);
-            return;
-          }
-
-          // إضافة سجل التحصيل
-          const { error: insertError } = await supabase
-            .from("collections")
-            .insert([
-              { collected_by: agent_id, customer_id, amount: due_amount },
-            ]);
-
-          if (insertError) {
-            alert("❌ حدث خطأ أثناء تسجيل التحصيل");
-            console.error(insertError);
-            return;
-          }
-
-          alert("✅ تم تحصيل الفاتورة بنجاح");
-          // تحديث الجدول الحالي
-          await loadCustomers(agent_id);
-          await loadAmounts(agent_id);
-        } catch (error) {
-          console.error(error);
-          alert("❌ حدث خطأ غير متوقع أثناء التحصيل");
-        }
+        await loadCustomers(agent_id);
+        await loadAgentMessages(agent_id);
+        showRandomMotivationalMessage();
       };
     </script>
   </body>
