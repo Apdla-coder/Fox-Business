@@ -674,6 +674,63 @@
         window.scrollTo({ top: 0, behavior: "smooth" });
       });
 
+      // ⚡️ تحديث آخر ظهور وموقع المندوب
+      async function updateLastLoginWithLocation(agent_id) {
+        if (!navigator.geolocation) {
+          alert("🌍 متصفحك لا يدعم تحديد الموقع");
+          return false;
+        }
+
+        return new Promise((resolve) => {
+          navigator.geolocation.getCurrentPosition(
+            async (position) => {
+              const latitude = position.coords.latitude;
+              const longitude = position.coords.longitude;
+
+              // ✅ حفظ الموقع الحالي
+              const { error: locationError } = await supabase
+                .from("agent_locations")
+                .insert([
+                  {
+                    agent_id,
+                    latitude,
+                    longitude,
+                    timestamp: new Date().toISOString(),
+                  },
+                ]);
+
+              if (locationError) {
+                console.error("❌ خطأ أثناء حفظ الموقع:", locationError);
+              } else {
+                console.log("✅ تم حفظ الموقع بنجاح:", {
+                  latitude,
+                  longitude,
+                });
+              }
+
+              // ✅ تحديث آخر ظهور
+              const { error: loginError } = await supabase
+                .from("agents")
+                .update({ last_login: new Date().toISOString() })
+                .eq("id", agent_id);
+
+              if (loginError) {
+                console.error("❌ خطأ أثناء تحديث آخر ظهور:", loginError);
+              } else {
+                console.log("✅ تم تحديث آخر ظهور للمندوب:", agent_id);
+              }
+
+              resolve(true);
+            },
+            (error) => {
+              alert("❌ لم يتم السماح بمشاركة الموقع.");
+              console.error(error);
+              resolve(false);
+            }
+          );
+        });
+      }
+
       // ⚡️ تشغيل الصفحة
       window.onload = async function () {
         const agent_id = localStorage.getItem("agent_id");
@@ -681,9 +738,20 @@
           alert("❌ليس لديك صلاحية");
           return;
         }
-        await loadCustomers(agent_id);
-        await loadAgentMessages(agent_id);
-        showRandomMotivationalMessage();
+
+        // ✅ تحديث آخر ظهور + الموقع (لو وافق)
+        const locationAllowed = await updateLastLoginWithLocation(agent_id);
+
+        if (locationAllowed) {
+          await loadCustomers(agent_id);
+          await loadAgentMessages(agent_id);
+          showRandomMotivationalMessage();
+        } else {
+          alert("⚠️ لن يتم تحديث آخر ظهور بدون الموافقة على الموقع");
+          await loadCustomers(agent_id);
+          await loadAgentMessages(agent_id);
+          showRandomMotivationalMessage();
+        }
       };
     </script>
   </body>
