@@ -30,13 +30,17 @@
         font-size: 1.1rem;
         color: #fffae3;
       }
+
+      /* =========== اللينكات =========== */
       a {
-        color: orange;
+        color: #fffa90;
         text-decoration: none;
         font-weight: bold;
+        transition: color 0.3s, text-decoration 0.3s;
       }
       a:hover {
         text-decoration: underline;
+        color: #ffe97f;
       }
 
       /* =========== الحاويات العامة =========== */
@@ -46,6 +50,7 @@
         padding: 20px;
         background-color: rgba(255, 255, 255, 0.08);
         border-radius: 6px;
+        box-shadow: 0px 4px 15px rgba(255, 255, 255, 0.1);
       }
 
       /* =========== الفورم على سطرين =========== */
@@ -65,15 +70,17 @@
         font-size: 0.9rem;
         font-weight: 600;
         margin-bottom: 5px;
+        color: #fffae3;
       }
       select,
       input,
       button {
-        padding: 8px 12px;
-        font-size: 0.9rem;
+        padding: 9px 12px;
+        font-size: 0.95rem;
         border-radius: 4px;
         border: none;
         outline: none;
+        transition: box-shadow 0.3s;
       }
       select,
       input {
@@ -82,7 +89,7 @@
       }
       select:focus,
       input:focus {
-        border: 1px solid #fffae3;
+        box-shadow: 0px 0px 8px rgba(255, 250, 227, 0.5);
       }
 
       /* =========== الجدول =========== */
@@ -91,6 +98,8 @@
         border-collapse: collapse;
         font-size: 0.9rem;
         margin: 20px 0;
+        border-radius: 8px;
+        overflow: hidden;
       }
       table thead {
         background-color: rgba(255, 255, 255, 0.15);
@@ -112,12 +121,15 @@
         background-color: #fffae3;
         color: #2c3e50;
         margin: 5px 0;
+        padding: 9px 15px;
+        border-radius: 5px;
+        transition: background-color 0.3s;
       }
       button:hover {
         background-color: #ffe97f;
       }
 
-      /* =========== الرسائل والحالة =========== */
+      /* =========== الرسائل وحالة التحديث =========== */
       #uploadLoader {
         font-size: 14px;
         color: #ffe97f;
@@ -130,6 +142,7 @@
         font-size: 13px;
         font-weight: bold;
         border-radius: 4px;
+        text-align: center;
       }
       #addAgentAlert {
         display: none;
@@ -142,7 +155,7 @@
         }
         select,
         input {
-          width: 100%; /* على موبايل يتمدد على العرض كامل */
+          width: 100%; /* مريح على موبايل */
         }
       }
     </style>
@@ -157,6 +170,7 @@
         align-items: center;
         justify-content: space-between;
         color: #fff;
+        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
         border-bottom-left-radius: 10px;
         border-bottom-right-radius: 10px;
       "
@@ -166,11 +180,13 @@
           ><img
             src="./Orange_logo.svg.png"
             alt="Logo"
-            style="height: 40px; margin-left: 10px; border-radius: 5px"
+            style="height: 50px; margin-left: 15px; border-radius: 8px"
         /></a>
         <h2 style="margin: 0">فوكس بيزنيس</h2>
       </div>
-      <div style="font-size: 16px">
+      <div style="font-size: 16px; display: flex; gap: 20px">
+        <a href="./management.html"><h2>رفع البيانات وإدارة المناديب ⬅</h2></a>
+        <a href="./agents_performance.html"><h2>أداء المناديب ⬅</h2></a>
         <a href="./dashboard.html"><h2>لوحة التحكم ⬅</h2></a>
       </div>
     </header>

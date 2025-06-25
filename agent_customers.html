@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <title>شيت عملاء المندوب</title>
     <style>
-      /* =========================== General Styles =========================== */
+      /* =========================== مظهر عام =========================== */
       body {
         font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
         margin: 0;
@@ -16,8 +16,10 @@
       h3 {
         text-align: center;
         color: #fff;
+        margin: 10px 0;
       }
-      /* =========================== Table Styles =========================== */
+
+      /* =========================== الجدول =========================== */
       table {
         width: 100%;
         border-collapse: collapse;
@@ -32,16 +34,41 @@
         padding: 14px;
         text-align: center;
         border-bottom: 1px solid #eee;
+        font-size: 14px;
       }
       th {
         background-color: #f8f9fa;
         color: #333;
+        font-weight: bold;
       }
+      /* =========== تنسيق اللنكات =========== */
+
+      a {
+        text-decoration: none;
+        color: inherit;
+        display: block;
+      }
+      a:hover {
+        color: #ff9800;
+        text-decoration: underline;
+      }
+
+      .cards-container a:hover .card {
+        transform: translateY(-5px);
+        box-shadow: 0px 12px 25px rgba(0, 0, 0, 0.3);
+      }
+
+      .cards-container a:hover {
+        color: #2980b9;
+      }
+
+      /* =========================== الحالة =========================== */
       .status {
         font-weight: bold;
         padding: 8px 15px;
         border-radius: 20px;
         display: inline-block;
+        font-size: 13px;
       }
       .paid {
         background-color: #2ecc71;
@@ -51,6 +78,8 @@
         background-color: #e74c3c;
         color: #fff;
       }
+
+      /* =========================== عناوين الأقسام =========================== */
       .section-header {
         background: #f1f1f1;
         font-weight: bold;
@@ -62,6 +91,8 @@
         margin: 30px 0 10px;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
       }
+
+      /* =========================== شريط البحث =========================== */
       #searchBarContainer {
         position: sticky;
         top: 0;
@@ -72,9 +103,9 @@
         justify-content: center;
         gap: 10px;
         align-items: center;
-        box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
         border-radius: 8px;
         margin-bottom: 20px;
+        box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
       }
       #searchInput {
         padding: 10px;
@@ -82,24 +113,29 @@
         max-width: 300px;
         border-radius: 8px;
         border: 1px solid #ccc;
+        font-size: 14px;
       }
       #searchButton {
         padding: 10px 20px;
         border-radius: 8px;
         font-weight: bold;
+        font-size: 14px;
         background: #27ae60;
         color: #fff;
         border: none;
         cursor: pointer;
+        transition: background 0.3s;
       }
       #searchButton:hover {
         background: #1e8449;
       }
+
+      /* =========================== زر الرجوع لأعلى =========================== */
       #scrollToTopBtn {
         position: fixed;
         bottom: 30px;
         left: 30px;
-        font-size: 24px;
+        font-size: 22px;
         padding: 12px 15px;
         border-radius: 50%;
         border: none;
@@ -108,17 +144,31 @@
         cursor: pointer;
         display: none;
         z-index: 1001;
+        transition: background 0.3s;
       }
-      /* Responsive */
+      #scrollToTopBtn:hover {
+        background-color: #2980b9;
+      }
+
+      /* =========================== مظهر موبايل =========================== */
       @media (max-width: 768px) {
         table,
         th,
         td {
           font-size: 13px;
+          padding: 10px;
         }
         .section-header {
           font-size: 15px;
           padding: 10px;
+        }
+        #searchInput {
+          font-size: 13px;
+          max-width: 100%;
+        }
+        #searchButton {
+          font-size: 13px;
+          padding: 8px 15px;
         }
       }
     </style>
@@ -133,22 +183,25 @@
         align-items: center;
         justify-content: space-between;
         color: #fff;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
         border-bottom-left-radius: 10px;
         border-bottom-right-radius: 10px;
       "
     >
       <div style="display: flex; align-items: center">
-        <a href="./dashboard.html">
-          <img
+        <a href="./index.html"
+          ><img
             src="./Orange_logo.svg.png"
             alt="Logo"
             style="height: 50px; margin-left: 15px; border-radius: 8px"
-          />
-        </a>
+        /></a>
         <h2 style="margin: 0">فوكس بيزنيس</h2>
       </div>
-      <div style="font-size: 16px">نظام إدارة التحصيل</div>
+      <div style="font-size: 16px; display: flex; gap: 20px">
+        <a href="./management.html"><h2>رفع البيانات وإدارة المناديب ⬅</h2></a>
+        <a href="./agents_performance.html"><h2>أداء المناديب ⬅</h2></a>
+        <a href="./dashboard.html"><h2>لوحة التحكم ⬅</h2></a>
+      </div>
     </header>
 
     <!-- ✅ العنوان -->
@@ -164,6 +217,21 @@
       />
       <button id="searchButton">🔍 بحث</button>
     </div>
+    <!-- ✅ الجدول الثاني لطلبات وقف الخدمة -->
+    <h2 style="text-align: center; color: #fff">
+      📋 الطلبات المقدمة لوقف الخدمة
+    </h2>
+    <table id="stopRequestsTable" style="display: none">
+      <thead>
+        <tr>
+          <th>اسم العميل</th>
+          <th>رقم الهاتف</th>
+          <th>حالة الطلب</th>
+          <th>تاريخ الطلب</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
 
     <!-- ✅ الجدول + العملاء -->
     <div id="customersSections"></div>
@@ -198,8 +266,8 @@
         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5aHRzZHFjY3l2eWdlbGVremV5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk3NTQwOTMsImV4cCI6MjA2NTMzMDA5M30.bRjHD6OkziXjfavEX-tA-6IFdag7KoFBqLRgNLqwcdg"
       );
 
-      let customersData = []; // تعريف على المستوى العام
-      let notesData = []; // تعريف على المستوى العام
+      let customersData = [];
+      let notesData = [];
 
       window.onload = async function () {
         const urlParams = new URLSearchParams(window.location.search);
@@ -210,6 +278,7 @@
         }
         await loadAgentInfo(agent_id);
         await loadCustomers(agent_id);
+        await loadStopRequests(agent_id);
       };
 
       async function loadAgentInfo(agent_id) {
@@ -255,7 +324,7 @@
 
       function displayCustomers(data, notes) {
         const container = document.getElementById("customersSections");
-        container.innerHTML = ""; // تفريغ قبل العرض
+        container.innerHTML = "";
         let totalDueAmount = 0;
         let lastSection = null;
 
@@ -275,15 +344,15 @@
 
             var table = document.createElement("table");
             table.innerHTML = `
-        <thead>
-          <tr>
-            <th>اسم العميل</th>
-            <th>رقم الهاتف</th>
-            <th>قيمة الفاتورة</th>
-            <th>حالة التحصيل</th>
-            <th>ملاحظة المندوب</th>
-          </tr>
-        </thead>`;
+    <thead>
+      <tr>
+        <th>اسم العميل</th>
+        <th>رقم الهاتف</th>
+        <th>قيمة الفاتورة</th>
+        <th>حالة التحصيل</th>
+        <th>ملاحظة المندوب</th>
+      </tr>
+    </thead>`;
             var tbody = document.createElement("tbody");
             table.appendChild(tbody);
             container.appendChild(table);
@@ -297,11 +366,11 @@
 
           const row = document.createElement("tr");
           row.innerHTML = `
-      <td>${customer.name}</td>
-      <td>${customer.phone}</td>
-      <td>${customer.due_amount} ج.م</td>
-      <td><span class="status ${statusClass}">${customer.collection_status}</span></td>
-      <td>${note}</td>`;
+  <td>${customer.name}</td>
+  <td>${customer.phone}</td>
+  <td>${customer.due_amount} ج.م</td>
+  <td><span class="status ${statusClass}">${customer.collection_status}</span></td>
+  <td>${note}</td>`;
           table.querySelector("tbody").appendChild(row);
         }
 
@@ -337,6 +406,96 @@
       scrollToTopBtn.addEventListener("click", () => {
         window.scrollTo({ top: 0, behavior: "smooth" });
       });
+
+      // ✅ جلب الطلبات من الجدول stop_requests
+      async function loadStopRequests(agent_id) {
+        const { data, error } = await supabase
+          .from("stop_requests")
+          .select("*")
+          .eq("agent_id", agent_id)
+          .order("request_date", { ascending: false });
+
+        if (error) {
+          console.error(error);
+          alert("❌ حدث خطأ أثناء تحميل طلبات وقف الخدمة");
+          return;
+        }
+
+        if (data.length === 0) {
+          document.getElementById("stopRequestsTable").style.display = "none";
+          return;
+        }
+
+        const table = document.getElementById("stopRequestsTable");
+        table.style.display = "table";
+        const tbody = table.querySelector("tbody");
+        tbody.innerHTML = "";
+
+        data.forEach((request) => {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+      <td>${request.customer_name}</td>
+      <td>${request.customer_phone}</td>
+      <td>${request.status}</td>
+      <td>${new Date(request.request_date).toLocaleString("ar-EG")}</td>
+      <td><button class="stop-button">تم الوقف</button></td>
+    `;
+
+          const btn = row.querySelector(".stop-button");
+          btn.addEventListener("click", async () => {
+            const confirmed = confirm(
+              "✅ هل أنت متأكد من نقل الطلب إلى الخطوط المتوقفة؟"
+            );
+            if (!confirmed) return;
+
+            const success = await moveToDisconnectedLines(request);
+            if (success) {
+              alert("✔️ تم نقل الطلب وحذفه بنجاح");
+              row.remove();
+            }
+          });
+          tbody.appendChild(row);
+        });
+      }
+
+      async function moveToDisconnectedLines(request) {
+        try {
+          // ✅ نقل الطلب إلى الجدول disconnected_lines
+          const { error: insertError } = await supabase
+            .from("disconnected_lines")
+            .insert([
+              {
+                customer_name: request.customer_name,
+                customer_phone: request.customer_phone,
+                status: "تم الوقف",
+                agent_id: request.agent_id,
+              },
+            ]);
+
+          if (insertError) {
+            alert("❌ حدث خطأ أثناء نقل الطلب إلى الجدول disconnected_lines");
+            console.error(insertError);
+            return false;
+          }
+
+          // ✅ حذف الطلب من الجدول stop_requests
+          const { error: deleteError } = await supabase
+            .from("stop_requests")
+            .delete()
+            .eq("id", request.id);
+
+          if (deleteError) {
+            alert("❌ حدث خطأ أثناء حذف الطلب من الجدول الحالي");
+            console.error(deleteError);
+            return false;
+          }
+
+          return true;
+        } catch (err) {
+          console.error("حدث خطأ:", err);
+          return false;
+        }
+      }
     </script>
   </body>
 </html>

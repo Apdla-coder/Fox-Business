@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <title>أداء المناديب</title>
+    <!-- مكتبة Supabase + XLSX -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+      /* =========== التنسيقات العامة =========== */
+      body {
+        font-family: "Segoe UI", Arial, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background: linear-gradient(135deg, #2c3e50, #4ca1af);
+        color: #333;
+      }
+
+      h1,
+      h2 {
+        text-align: center;
+        color: #fff;
+        margin-bottom: 20px;
+      }
+
+      /* =========== الجدول =========== */
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        border-radius: 12px;
+        overflow: hidden;
+        background: #fff;
+        box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.2);
+      }
+
+      th,
+      td {
+        padding: 14px;
+        text-align: center;
+        border-bottom: 1px solid #eee;
+      }
+
+      th {
+        background-color: #f8f9fa;
+        color: #333;
+        font-weight: bold;
+      }
+
+      /* =========== اللينكات =========== */
+      a {
+        color: orange;
+        text-decoration: none;
+        font-weight: bold;
+        transition: color 0.3s, text-decoration 0.3s;
+      }
+
+      a:hover {
+        color: #ff9800;
+        text-decoration: underline;
+      }
+      #openSendMessageModal {
+        padding: 12px 24px;
+        font-size: 16px;
+        font-weight: bold;
+        color: #fff;
+        background: linear-gradient(135deg, #27ae60, #2ecc71);
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0px 4px 12px rgba(46, 204, 113, 0.3);
+        margin: 20px auto;
+        display: block;
+      }
+
+      #openSendMessageModal:hover {
+        background: linear-gradient(135deg, #219150, #27ae60);
+        transform: translateY(-3px);
+        box-shadow: 0px 6px 18px rgba(46, 204, 113, 0.4);
+      }
+
+      #openSendMessageModal:active {
+        transform: translateY(1px);
+        box-shadow: 0px 3px 10px rgba(46, 204, 113, 0.25);
+      }
+      /* =========== الفوتر =========== */
+      footer {
+        background: #2c3e50;
+        color: #fff;
+        text-align: center;
+        padding: 15px;
+        font-size: 14px;
+        border-top-left-radius: 10px;
+        border-top-right-radius: 10px;
+        margin-top: 40px;
+      }
+
+      /* =========== مظهر الجدول على الأجهزة الصغيرة =========== */
+      @media (max-width: 768px) {
+        table {
+          display: block;
+          width: 100%;
+          overflow-x: auto;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header
+      style="
+        background: linear-gradient(45deg, #2c3e50, #4ca1af);
+        padding: 15px 30px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        color: #fff;
+        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+        border-bottom-left-radius: 10px;
+        border-bottom-right-radius: 10px;
+      "
+    >
+      <div style="display: flex; align-items: center">
+        <a href="./index.html"
+          ><img
+            src="./Orange_logo.svg.png"
+            alt="Logo"
+            style="height: 50px; margin-left: 15px; border-radius: 8px"
+        /></a>
+        <h2 style="margin: 0">فوكس بيزنيس</h2>
+      </div>
+      <div style="font-size: 16px; display: flex; gap: 20px">
+        <a href="./management.html"><h2>رفع البيانات وإدارة المناديب ⬅</h2></a>
+        <a href="./agents_performance.html"><h2>أداء المناديب ⬅</h2></a>
+        <a href="./dashboard.html"><h2>لوحة التحكم ⬅</h2></a>
+      </div>
+    </header>
+
+    <h1>أداء المناديب اليوم</h1>
+    <table>
+      <thead>
+        <tr>
+          <th>شيت المندوب</th>
+          <th>عدد الفواتير اليوم</th>
+          <th>المبلغ المحصل اليوم</th>
+          <th>إجمالي فواتيره</th>
+          <th>الفواتير المحصلة على مدار المدة</th>
+          <th>المحصل الكلي</th>
+          <th>المتبقي الكلي</th>
+          <th>حالة اليوم</th>
+          <th>تسجيل دخول</th>
+          <th>تتبع مباشر</th>
+        </tr>
+      </thead>
+      <tbody id="agentsTable"></tbody>
+    </table>
+
+    <!-- Button لفتح البوب-أب -->
+    <button id="openSendMessageModal">✉️ إرسال رسالة</button>
+
+    <!-- البوب-أب للإرسال -->
+    <div
+      id="sendAgentMessageModal"
+      style="
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+      "
+    >
+      <div
+        style="
+          background: #fff;
+          padding: 20px;
+          border-radius: 12px;
+          max-width: 400px;
+          width: 100%;
+          font-family: Arial, sans-serif;
+        "
+      >
+        <h3>✉️ إرسال رسالة للمندوب</h3>
+        <label for="sendAgentSelect">👤 اختر المندوب:</label>
+        <select id="sendAgentSelect"></select>
+        <input id="sendTitle" type="text" placeholder="العنوان" />
+        <textarea id="sendBody" placeholder="نص الرسالة"></textarea>
+        <div
+          id="sendAlertBox"
+          style="
+            display: none;
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+          "
+        ></div>
+        <div style="text-align: left">
+          <button id="sendAgentButton">📩 إرسال</button>
+          <button id="closeSendAgentModal" style="background: #c0392b">
+            ❌ إغلاق
+          </button>
+        </div>
+      </div>
+    </div>
+    <footer>
+      <div>جميع الحقوق محفوظة &copy; فوكس بيزنيس</div>
+      <div>مطور النظام: عبدالله هاني</div>
+      <div>خدمة العملاء: 01212555345</div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script type="module">
+      import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+      const supabase = createClient(
+        "https://vyhtsdqccyvygelekzey.supabase.co",
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5aHRzZHFjY3l2eWdlbGVremV5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk3NTQwOTMsImV4cCI6MjA2NTMzMDA5M30.bRjHD6OkziXjfavEX-tA-6IFdag7KoFBqLRgNLqwcdg"
+      );
+
+      window.onload = async () => {
+        await loadAgentsData();
+        attachEventListeners();
+      };
+
+      function attachEventListeners() {
+        document
+          .getElementById("openSendMessageModal")
+          .addEventListener("click", async () => {
+            await loadAgentsForMessage();
+            document.getElementById("sendAgentMessageModal").style.display =
+              "flex";
+          });
+        document
+          .getElementById("closeSendAgentModal")
+          .addEventListener("click", () => {
+            document.getElementById("sendAgentMessageModal").style.display =
+              "none";
+          });
+        document
+          .getElementById("sendAgentButton")
+          .addEventListener("click", sendAgentMessage);
+      }
+
+      // ✅ تحميل الجدول
+      async function loadAgentsData() {
+        try {
+          const { data: agents } = await supabase.from("agents").select("*");
+          const table = document.getElementById("agentsTable");
+          table.innerHTML = "";
+          const today = new Date();
+          const todayString = today.toISOString().split("T")[0];
+
+          for (const agent of agents) {
+            const { data: agentCustomers } = await supabase
+              .from("customers")
+              .select("due_amount, collection_status")
+              .eq("agent_id", agent.id);
+            let totalCollectedAll = 0,
+              totalPendingAll = 0;
+
+            agentCustomers?.forEach((c) => {
+              if (c.collection_status === "تم التحصيل") {
+                totalCollectedAll += c.due_amount || 0;
+              } else {
+                totalPendingAll += c.due_amount || 0;
+              }
+            });
+            const agentInvoicesAllTime = agentCustomers?.length || 0;
+            const agentCollectedInvoicesAllTime = agentCustomers.filter(
+              (c) => c.collection_status === "تم التحصيل"
+            ).length;
+
+            const { data: agentCollectionsToday } = await supabase
+              .from("collections")
+              .select("amount, collection_date")
+              .eq("collected_by", agent.id)
+              .gte("collection_date", todayString)
+              .lt("collection_date", todayString + "T23:59:59");
+
+            const collectedTodayCount = agentCollectionsToday?.length || 0;
+            const collectedTodayAmount = agentCollectionsToday?.reduce(
+              (sum, item) => sum + (item.amount || 0),
+              0
+            );
+
+            const { data: latestLocation } = await supabase
+              .from("agent_locations")
+              .select("*")
+              .eq("agent_id", agent.id)
+              .order("timestamp", { ascending: false })
+              .limit(1)
+              .single();
+
+            let locationDisplay = "⏳ لم يتم تسجيل الموقع";
+            if (latestLocation?.latitude && latestLocation?.longitude) {
+              const lat = latestLocation.latitude;
+              const lng = latestLocation.longitude;
+
+              locationDisplay =
+                window.innerWidth <= 768
+                  ? `<a href="https://www.google.com/maps?q=${lat},${lng}" target="_blank" style="color:blue;text-decoration:underline">📍 عرض على الخريطة</a>`
+                  : `<iframe src="https://www.google.com/maps?q=${lat},${lng}&output=embed" style="border:0;width:100%;height:150px;" allowfullscreen loading="lazy"></iframe>`;
+            }
+
+            const columns = [
+              `<a href="agent_customers.html?agent_id=${agent.id}">${agent.name}</a>`,
+              collectedTodayCount,
+              `${collectedTodayAmount.toFixed(2)} ج.م`,
+              `${agentInvoicesAllTime} فاتورة`,
+              `${agentCollectedInvoicesAllTime} فاتورة`,
+              `${totalCollectedAll.toFixed(2)} ج.م`,
+              `${totalPendingAll.toFixed(2)} ج.م`,
+              collectedTodayCount > 0 ? "✅" : "⏳",
+              agent.last_login
+                ? `👋 ${new Date(agent.last_login).toLocaleString()}`
+                : "⏳ لم يسجل بعد",
+              locationDisplay,
+            ];
+            const labels = [
+              "اسم المندوب",
+              "عدد الفواتير اليوم",
+              "المبلغ المحصل اليوم",
+              "إجمالي فواتيره",
+              "الفواتير المحصلة على مدار المدة",
+              "المحصل الكلي",
+              "المتبقي الكلي",
+              "حالة اليوم",
+              "تسجيل دخول",
+              "تتبع مباشر",
+            ];
+            const row = document.createElement("tr");
+            columns.forEach((content, index) => {
+              const td = document.createElement("td");
+              td.setAttribute("data-label", labels[index]);
+              td.innerHTML = content;
+              row.appendChild(td);
+            });
+            table.appendChild(row);
+          }
+        } catch (error) {
+          console.error(error);
+          alert("❌ حدث خطأ غير متوقع أثناء تحميل الجدول");
+        }
+      }
+
+      // ✅ إرسال رسالة
+      async function sendAgentMessage() {
+        const title = document.getElementById("sendTitle").value.trim();
+        const body = document.getElementById("sendBody").value.trim();
+        const agent_id = document.getElementById("sendAgentSelect").value;
+
+        const alertBox = document.getElementById("sendAlertBox");
+
+        if (!title || !body || !agent_id) {
+          alertBox.textContent = "يرجى إدخال كل الحقول.";
+          alertBox.style.display = "block";
+          alertBox.style.background = "#f8d7da";
+          alertBox.style.color = "#721c24";
+          return;
+        }
+
+        const { error } = await supabase
+          .from("messages")
+          .insert([{ title, body, agent_id }]);
+
+        if (error) {
+          alertBox.textContent = "حدث خطأ أثناء إرسال الرسالة.";
+          alertBox.style.display = "block";
+          alertBox.style.background = "#f8d7da";
+          alertBox.style.color = "#721c24";
+          console.error(error);
+        } else {
+          alertBox.textContent = "✅ تم إرسال الرسالة بنجاح.";
+          alertBox.style.display = "block";
+          alertBox.style.background = "#d4edda";
+          alertBox.style.color = "#155724";
+          document.getElementById("sendTitle").value = "";
+          document.getElementById("sendBody").value = "";
+          setTimeout(() => {
+            document.getElementById("sendAgentMessageModal").style.display =
+              "none";
+          }, 1500);
+        }
+      }
+
+      // ✅ تحميل قائمة المناديب
+      async function loadAgentsForMessage() {
+        const select = document.getElementById("sendAgentSelect");
+        select.innerHTML = "";
+        const { data: agents } = await supabase.from("agents").select("*");
+        agents?.forEach((agent) => {
+          const option = document.createElement("option");
+          option.value = agent.id;
+          option.textContent = agent.name;
+          select.appendChild(option);
+        });
+      }
+    </script>
+  </body>
+</html>

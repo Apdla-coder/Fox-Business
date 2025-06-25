@@ -3,11 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <title>لوحة تحكم المدير</title>
-    <!-- مكتبة Supabase + XLSX -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
     <style>
-      /* =========== الخط الأساسي والخلفية =========== */
+      /* =========== تنسيقات الصفحة العامة =========== */
       body {
         font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
         margin: 0;
@@ -16,7 +16,6 @@
         color: #333;
       }
 
-      /* =========== العناوين =========== */
       h1,
       h2 {
         text-align: center;
@@ -24,40 +23,7 @@
         margin-bottom: 20px;
       }
 
-      /* =========== الفورمز =========== */
-      select,
-      input[type="file"],
-      #addAgentContainer input,
-      #addAgentContainer select {
-        padding: 10px;
-        font-size: 14px;
-        border-radius: 8px;
-        border: 1px solid #ccc;
-        margin-bottom: 10px;
-        max-width: 100%;
-      }
-
-      button {
-        padding: 10px 20px;
-        background: #27ae60;
-        border: none;
-        color: #fff;
-        font-size: 14px;
-        border-radius: 8px;
-        cursor: pointer;
-        transition: 0.3s ease-in-out;
-      }
-      button:hover {
-        background: #219150;
-      }
-      #uploadStatus,
-      #clearStatus {
-        font-weight: bold;
-        margin: 10px 0;
-        text-align: center;
-      }
-
-      /* =========== البطاقات (cards) =========== */
+      /* =========== البطاقات =========== */
       .cards-container {
         display: flex;
         flex-wrap: wrap;
@@ -65,6 +31,7 @@
         gap: 25px;
         margin-bottom: 40px;
       }
+
       .card {
         background-color: #ffffff;
         width: 200px;
@@ -74,66 +41,46 @@
         font-size: 16px;
         color: #2c3e50;
         box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.25);
+        transition: transform 0.3s, box-shadow 0.3s;
       }
+
       .card div {
         font-size: 24px;
         font-weight: bold;
         margin-top: 10px;
       }
 
-      /* =========== الجدول =========== */
-      table {
-        width: 100%;
-        border-collapse: collapse;
-        border-radius: 12px;
-        overflow: hidden;
-        background: #fff;
-        box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.2);
-      }
-      th,
-      td {
-        padding: 14px;
-        text-align: center;
-        border-bottom: 1px solid #eee;
-      }
-      th {
-        background-color: #f8f9fa;
-        color: #333;
-      }
+      /* =========== تنسيق اللنكات =========== */
+
       a {
-        color: orange;
         text-decoration: none;
-        font-weight: bold;
+        color: inherit;
+        display: block;
       }
       a:hover {
+        color: #ff9800;
         text-decoration: underline;
       }
 
-      /* =========== فورم إضافة مندوب =========== */
-      #addAgentContainer {
-        max-width: 300px;
-        margin: 20px auto;
-        text-align: center;
-      }
-      #addAgentContainer h3 {
-        font-size: 20px;
-        font-weight: bold;
-      }
-      #addAgentContainer button {
-        padding: 10px 20px;
+      .cards-container a:hover .card {
+        transform: translateY(-5px);
+        box-shadow: 0px 12px 25px rgba(0, 0, 0, 0.3);
       }
 
-      /* =========== موبايل =========== */
-      @media (max-width: 768px) {
-        .cards-container {
-          flex-direction: column;
-          align-items: center;
-        }
-        table,
-        th,
-        td {
-          font-size: 13px;
-        }
+      .cards-container a:hover {
+        color: #2980b9;
+      }
+
+      /* =========== الفوتر =========== */
+      footer {
+        background: #2c3e50;
+        color: #fff;
+        text-align: center;
+        padding: 15px;
+        font-size: 14px;
+        border-top-left-radius: 10px;
+        border-top-right-radius: 10px;
+        margin-top: 40px;
       }
     </style>
   </head>
@@ -162,8 +109,11 @@
         /></a>
         <h2 style="margin: 0">فوكس بيزنيس</h2>
       </div>
-      <div style="font-size: 16px">
+      <div style="font-size: 16px; display: flex; gap: 20px">
         <a href="./management.html"><h2>رفع البيانات وإدارة المناديب ⬅</h2></a>
+        <a href="./agents_performance.html"><h2>أداء المناديب ⬅</h2></a>
+        <a href="./dashboard.html"><h2>لوحة التحكم ⬅</h2></a>
+        <a href="./disconnected_lines.html"><h2>الخطوط المتوقفة ⬅</h2></a>
       </div>
     </header>
 
@@ -171,432 +121,243 @@
     <h1>لوحة تحكم المدير</h1>
     <div class="cards-container">
       <div class="card">
-        📄<br />إجمالي الفواتير
+        💵 المحصل اليوم
+        <div id="daily_collected">0 ج.م</div>
+      </div>
+      <div class="card">
+        💳 المحصل على مدار المدة
+        <div id="all_collected">0 ج.م</div>
+      </div>
+      <div class="card">
+        🕔 الفواتير المتأخرة على مدار المدة
+        <div id="all_pending">0 ج.م</div>
+      </div>
+      <div class="card">
+        📄 إجمالي الفواتير
         <div id="total_invoices">0</div>
       </div>
       <div class="card">
-        💰<br />المحصل اليوم
-        <div id="total_collected">0</div>
+        ✅ الفواتير التي تم تحصيلها على مدار المدة
+        <div id="all_collected_count">0</div>
       </div>
       <div class="card">
-        🕒<br />فواتير متأخرة
-        <div id="total_pending">0</div>
+        📊 نسبة الإنجاز اليومي
+        <div id="daily_completion">0%</div>
       </div>
       <div class="card">
-        📊<br />نسبة الإنجاز
-        <div id="monthly_completion">0%</div>
+        🏁 نسبة الإنجاز على مدار المدة
+        <div id="all_completion">0%</div>
       </div>
       <div class="card">
-        💸<br />إجمالي المحصل
-        <div id="totalCollectedAll">0 ج.م</div>
-      </div>
-      <div class="card">
-        🔄<br />إجمالي المتبقي
-        <div id="totalPendingAll">0 ج.م</div>
+        🔄 إجمالي المتبقي على مدار المدة
+        <div id="all_remaining">0 ج.م</div>
       </div>
     </div>
 
-    <!-- =========== الجدول الرئيسي =========== -->
-    <h2>أداء المناديب اليوم</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>اسم المندوب</th>
-          <th>عدد الفواتير اليوم</th>
-          <th>المبلغ المحصل اليوم</th>
-          <th>إجمالي فواتيره</th>
-          <th>الفواتير المحصلة على مدار المدة</th>
-          <th>المحصل الكلي</th>
-          <th>المتبقي الكلي</th>
-          <th>حالة اليوم</th>
-          <th>آخر تسجيل دخول</th>
-          <th>تتبع مباشر</th>
-        </tr>
-      </thead>
-      <tbody id="agentsTable"></tbody>
-    </table>
-    <br />
-    <!-- Button لفتح البوب-أب -->
-    <button id="openSendMessageModal">✉️ إرسال رسالة</button>
-
-    <!-- البوب-أب -->
-    <div
-      id="sendAgentMessageModal"
+    <!-- الرسم البياني -->
+    <canvas
+      id="summaryChart"
       style="
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.5);
-        justify-content: center;
-        align-items: center;
-        z-index: 1000;
+        max-width: 600px;
+        max-height: 300px;
+        margin: 30px auto;
+        display: block;
+        background-color: #ffffff;
+        border-radius: 12px;
+        padding: 15px;
+        box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.25);
       "
-    >
-      <div
-        style="
-          background: #fff;
-          padding: 20px;
-          border-radius: 12px;
-          max-width: 400px;
-          width: 100%;
-          position: relative;
-          font-family: Arial, sans-serif;
-        "
-      >
-        <h3>✉️ إرسال رسالة للمندوب</h3>
-        <label for="sendAgentSelect">👤 اختر المندوب:</label>
-        <select id="sendAgentSelect"></select>
-
-        <input id="sendTitle" type="text" placeholder="العنوان" />
-        <textarea id="sendBody" placeholder="نص الرسالة"></textarea>
-
-        <div
-          id="sendAlertBox"
-          style="
-            display: none;
-            margin: 10px 0;
-            padding: 10px;
-            border-radius: 5px;
-          "
-        ></div>
-
-        <div style="text-align: left">
-          <button id="sendAgentButton">📩 إرسال</button>
-          <button id="closeSendAgentModal" style="background: #c0392b">
-            ❌ إغلاق
-          </button>
-        </div>
-      </div>
-    </div>
+    ></canvas>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js/dist/chart.umd.js"></script>
 
     <!-- =========== الفوتر =========== -->
-    <footer
-      style="
-        background: #2c3e50;
-        color: #fff;
-        text-align: center;
-        padding: 15px;
-        font-size: 14px;
-        border-top-left-radius: 10px;
-        border-top-right-radius: 10px;
-        margin-top: 40px;
-      "
-    >
+    <footer>
       <div>جميع الحقوق محفوظة &copy; فوكس بيزنيس</div>
       <div>مطور النظام: عبدالله هاني</div>
       <div>خدمة العملاء: 01212555345</div>
     </footer>
 
-    <!-- ✅ JavaScript النهائي -->
+    <!-- السكربت النهائي -->
+    <!-- حمّل مكتبة تشارت قبل السكربت بتاعك -->
 
     <script type="module">
       import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
-      import * as XLSX from "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/+esm";
 
       const supabase = createClient(
         "https://vyhtsdqccyvygelekzey.supabase.co",
         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5aHRzZHFjY3l2eWdlbGVremV5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk3NTQwOTMsImV4cCI6MjA2NTMzMDA5M30.bRjHD6OkziXjfavEX-tA-6IFdag7KoFBqLRgNLqwcdg"
       );
 
-      // ✅ 1. تهيئة الصفحة
       window.onload = async () => {
         await loadSummary();
-        await loadAgentsData();
-        await loadAgentsOptions();
-        attachEventListeners();
       };
 
-      // ✅ 2. ربط الأزرار بالدوال
-      function attachEventListeners() {
-        document
-          .getElementById("excelUploadButton")
-          ?.addEventListener("click", uploadExcel);
-        document
-          .getElementById("clearButton")
-          ?.addEventListener("click", clearAllData);
-        document
-          .getElementById("addAgentButton")
-          ?.addEventListener("click", addAgent);
-        document
-          .getElementById("sendAgentButton")
-          ?.addEventListener("click", sendAgentMessage);
-
-        const openBtn = document.getElementById("openSendMessageModal");
-        const closeBtn = document.getElementById("closeSendAgentModal");
-        const modal = document.getElementById("sendAgentMessageModal");
-        if (openBtn && closeBtn && modal) {
-          openBtn.addEventListener("click", async () => {
-            await loadAgentsForMessage();
-            modal.style.display = "flex";
-          });
-          closeBtn.addEventListener("click", () => {
-            modal.style.display = "none";
-          });
-        }
-      }
-
-      // ✅ 3. تحميل الملخّص
       async function loadSummary() {
         try {
-          const { data } = await supabase
-            .from("daily_summary")
-            .select("*")
-            .limit(1)
-            .maybeSingle();
+          // =========== سحب البيانات من Supabase ===========
+
           const { data: allCustomers } = await supabase
             .from("customers")
             .select("id");
           const totalInvoicesAllTime = allCustomers?.length || 0;
 
-          document.getElementById("total_invoices").innerText =
-            totalInvoicesAllTime;
-
-          if (data) {
-            document.getElementById("total_collected").innerText =
-              data.total_collected || 0;
-            document.getElementById("total_pending").innerText =
-              data.total_pending_invoices || 0;
-
-            let completionPercentage = 30;
-            if (data.total_collected >= 7000) {
-              completionPercentage = 90;
-            } else if (data.total_collected >= 5000) {
-              completionPercentage = 70;
-            }
-            document.getElementById("monthly_completion").innerText =
-              completionPercentage + "%";
-          }
+          const { data: dailyData } = await supabase
+            .from("daily_summary")
+            .select("*")
+            .limit(1)
+            .maybeSingle();
+          const dailyCollected = dailyData?.total_collected || 0;
 
           const { data: allCollected } = await supabase
             .from("customers")
             .select("due_amount")
             .eq("collection_status", "تم التحصيل");
-          const { data: allPending } = await supabase
-            .from("customers")
-            .select("due_amount")
-            .neq("collection_status", "تم التحصيل");
-
           const totalCollectedAll = (allCollected || []).reduce(
             (sum, c) => sum + (c.due_amount || 0),
             0
           );
-          const totalPendingAll = (allPending || []).reduce(
-            (sum, c) => sum + (c.due_amount || 0),
-            0
-          );
+          const totalCollectedCount = allCollected?.length || 0;
 
-          document.getElementById("totalCollectedAll").innerText =
-            totalCollectedAll.toFixed(2) + " ج.م";
-          document.getElementById("totalPendingAll").innerText =
-            totalPendingAll.toFixed(2) + " ج.م";
+          const { data: allPending } = await supabase
+            .from("customers")
+            .select("due_amount")
+            .neq("collection_status", "تم التحصيل");
+          const totalPendingAll = allPending?.length || 0;
+
+          // =========== تحديث القيم على الصفحة ===========
+          document.getElementById("total_invoices").innerText =
+            totalInvoicesAllTime;
+          document.getElementById(
+            "daily_collected"
+          ).innerText = `${dailyCollected} ج.م`;
+          document.getElementById(
+            "all_collected"
+          ).innerText = `${totalCollectedAll.toFixed(2)} ج.م`;
+          document.getElementById(
+            "all_pending"
+          ).innerText = `${totalPendingAll} فاتورة`;
+          document.getElementById("all_collected_count").innerText =
+            totalCollectedCount;
+
+          let dailyCompletion = 0;
+          if (dailyCollected >= 7000) dailyCompletion = 50;
+          else if (dailyCollected >= 5000) dailyCompletion = 30;
+          document.getElementById(
+            "daily_completion"
+          ).innerText = `${dailyCompletion}%`;
+
+          let allCompletion = 0;
+          if (totalCollectedAll >= 50000) allCompletion = 100;
+          else if (totalCollectedAll >= 30000) allCompletion = 70;
+          else if (totalCollectedAll >= 20000) allCompletion = 50;
+          document.getElementById(
+            "all_completion"
+          ).innerText = `${allCompletion}%`;
+
+          document.getElementById("all_remaining").innerText = `${(
+            allPending || []
+          )
+            .reduce((sum, c) => sum + (c.due_amount || 0), 0)
+            .toFixed(2)} ج.م`;
+
+          // =========== الرسم البياني ===========
+          const ctx = document.getElementById("summaryChart").getContext("2d");
+          new window.Chart(ctx, {
+            type: "bar",
+            data: {
+              labels: [
+                "المحصل اليوم",
+                "على مدار المدة",
+                "الفواتير المتأخرة (عدد)",
+                "إجمالي الفواتير",
+                "تم تحصيلها",
+                "إنجاز يومي",
+                "إنجاز المدة",
+                "المتبقي",
+              ],
+              datasets: [
+                {
+                  label: "القيم",
+                  data: [
+                    dailyCollected,
+                    totalCollectedAll,
+                    totalPendingAll,
+                    totalInvoicesAllTime,
+                    totalCollectedAll,
+                    dailyCompletion,
+                    allCompletion,
+                    (allPending || []).reduce(
+                      (sum, c) => sum + (c.due_amount || 0),
+                      0
+                    ),
+                  ],
+                  backgroundColor: [
+                    "#3498db",
+                    "#2ecc71",
+                    "#e74c3c",
+                    "#f1c40f",
+                    "#1abc9c",
+                    "#9b59b6",
+                    "#e67e22",
+                    "#34495e",
+                  ],
+                },
+              ],
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                title: {
+                  display: true,
+                  text: "📊 ملخص الأداء",
+                  font: { size: 18 },
+                  color: "#000",
+                },
+                legend: {
+                  labels: {
+                    color: "#000",
+                  },
+                },
+              },
+              scales: {
+                y: {
+                  beginAtZero: true,
+                  title: {
+                    display: true,
+                    text: "القيم",
+                    font: { size: 14 },
+                    color: "#000",
+                  },
+                  ticks: {
+                    font: { size: 12 },
+                    color: "#000",
+                  },
+                  grid: {
+                    color: "#e0e0e0",
+                  },
+                },
+                x: {
+                  title: {
+                    display: true,
+                    text: "الفئة",
+                    font: { size: 14 },
+                    color: "#000",
+                  },
+                  ticks: {
+                    font: { size: 12 },
+                    color: "#000",
+                  },
+                  grid: {
+                    color: "#f5f5f5",
+                  },
+                },
+              },
+            },
+          });
         } catch (err) {
-          console.error("Error loading summary:", err);
+          console.error("حدث خطأ أثناء تحميل البيانات:", err);
         }
-      }
-
-      // ✅ 4. تحميل جدول المناديب + الموقع الحالي
-      async function loadAgentsData() {
-        try {
-          const { data: agents, error: agentsError } = await supabase
-            .from("agents")
-            .select("*");
-
-          if (agentsError) {
-            console.error(agentsError);
-            alert("❌ حدث خطأ أثناء جلب بيانات المناديب");
-            return;
-          }
-
-          const table = document.getElementById("agentsTable");
-          table.innerHTML = ""; // تفريغ الجدول قبل ملء البيانات
-
-          // التاريخ الحالي
-          const today = new Date();
-          const todayString = today.toISOString().split("T")[0];
-
-          for (const agent of agents) {
-            // 1️⃣ جلب العملاء التابعين للمندوب
-            const { data: agentCustomers, error: customersError } =
-              await supabase
-                .from("customers")
-                .select("due_amount, collection_status")
-                .eq("agent_id", agent.id);
-
-            if (customersError) {
-              console.error(customersError);
-              continue;
-            }
-
-            // حساب الإجماليات
-            let totalCollectedAll = 0;
-            let totalPendingAll = 0;
-
-            agentCustomers?.forEach((c) => {
-              if (c.collection_status === "تم التحصيل") {
-                totalCollectedAll += c.due_amount || 0;
-              } else {
-                totalPendingAll += c.due_amount || 0;
-              }
-            });
-
-            const agentInvoicesAllTime = agentCustomers?.length || 0;
-            const agentCollectedInvoicesAllTime = agentCustomers.filter(
-              (c) => c.collection_status === "تم التحصيل"
-            ).length;
-
-            // 2️⃣ المحصل اليوم
-            const { data: agentCollectionsToday, error: collectionsError } =
-              await supabase
-                .from("collections")
-                .select("amount, collection_date")
-                .eq("collected_by", agent.id)
-                .gte("collection_date", todayString) // بداية اليوم
-                .lt("collection_date", todayString + "T23:59:59"); // نهاية اليوم
-
-            if (collectionsError) {
-              console.error(collectionsError);
-              continue;
-            }
-
-            const collectedTodayCount = agentCollectionsToday?.length || 0;
-            const collectedTodayAmount = agentCollectionsToday?.reduce(
-              (sum, item) => sum + (item.amount || 0),
-              0
-            );
-
-            // ✅ 3️⃣ آخر موقع للمندوب
-            const { data: latestLocation, error: locationError } =
-              await supabase
-                .from("agent_locations")
-                .select("*")
-                .eq("agent_id", agent.id)
-                .order("timestamp", { ascending: false })
-                .limit(1)
-                .single();
-
-            // تعريف locationDisplay
-            let locationDisplay = "⏳ لم يتم تسجيل الموقع";
-            if (
-              latestLocation &&
-              latestLocation.latitude &&
-              latestLocation.longitude
-            ) {
-              const lat = latestLocation.latitude;
-              const lng = latestLocation.longitude;
-              locationDisplay = `<a href="https://www.google.com/maps?q=${lat},${lng}" target="_blank" style="color:blue;text-decoration:underline;">
-    📍 عرض على الخريطة
-  </a>`;
-            }
-
-            // ✅ إنشاء صف الجدول
-            const row = document.createElement("tr");
-            row.innerHTML = `
-        <td><a href="agent_customers.html?agent_id=${agent.id}">${
-              agent.name
-            }</a></td>
-        <td>${collectedTodayCount}</td>
-        <td>${collectedTodayAmount.toFixed(2)} ج.م</td>
-        <td>${agentInvoicesAllTime} فاتورة</td>
-        <td>${agentCollectedInvoicesAllTime} فاتورة</td>
-        <td>${totalCollectedAll.toFixed(2)} ج.م</td>
-        <td>${totalPendingAll.toFixed(2)} ج.م</td>
-        <td>${collectedTodayCount > 0 ? "✅" : "⏳"}</td>
-        <td>${
-          agent.last_login
-            ? `👋 آخر دخول: ${new Date(agent.last_login).toLocaleString()}`
-            : "⏳ لم يسجل بعد"
-        }</td>
-<td>
-  ${
-    latestLocation && latestLocation.latitude && latestLocation.longitude
-      ? `<iframe
-        width="250"
-        height="150"
-        style="border:0;"
-        src="https://www.google.com/maps?q=${latestLocation.latitude},${latestLocation.longitude}&z=15&output=embed"
-        allowfullscreen
-        loading="lazy">
-      </iframe>`
-      : "⏳ لم يتم تسجيل الموقع"
-  }
-</td>
-      `;
-            table.appendChild(row);
-          }
-        } catch (err) {
-          console.error("Error loading agents:", err);
-          alert("❌ حدث خطأ غير متوقع أثناء تحميل الجدول");
-        }
-      }
-      // ✅ 5. إرسال رسالة للمندوب
-      async function sendAgentMessage() {
-        const title = document.getElementById("sendTitle")?.value.trim();
-        const body = document.getElementById("sendBody")?.value.trim();
-        const agent_id = document.getElementById("sendAgentSelect")?.value;
-
-        const alertBox = document.getElementById("sendAlertBox");
-
-        if (!title || !body || !agent_id) {
-          alertBox.textContent = "يرجى إدخال كل الحقول.";
-          alertBox.style.display = "block";
-          alertBox.style.background = "#f8d7da";
-          alertBox.style.color = "#721c24";
-          return;
-        }
-
-        const { error } = await supabase
-          .from("messages")
-          .insert([{ title, body, agent_id }]);
-        if (error) {
-          alertBox.textContent = "حدث خطأ أثناء إرسال الرسالة.";
-          alertBox.style.display = "block";
-          alertBox.style.background = "#f8d7da";
-          alertBox.style.color = "#721c24";
-          console.error(error);
-        } else {
-          alertBox.textContent = "✅ تم إرسال الرسالة بنجاح.";
-          alertBox.style.display = "block";
-          alertBox.style.background = "#d4edda";
-          alertBox.style.color = "#155724";
-          document.getElementById("sendTitle").value = "";
-          document.getElementById("sendBody").value = "";
-          setTimeout(() => {
-            const modal = document.getElementById("sendAgentMessageModal");
-            if (modal) modal.style.display = "none";
-          }, 1500);
-        }
-      }
-
-      // ✅ 6. تعريف الدالة loadAgentsForMessage
-      async function loadAgentsForMessage() {
-        const select = document.getElementById("sendAgentSelect");
-        if (!select) return;
-
-        select.innerHTML = ""; // تفريغ قبل الملء
-        const { data: agents, error } = await supabase
-          .from("agents")
-          .select("*");
-
-        if (error) {
-          alert("❌ خطأ أثناء تحميل قائمة المناديب");
-          console.error(error);
-          return;
-        }
-
-        agents.forEach((agent) => {
-          const option = document.createElement("option");
-          option.value = agent.id;
-          option.textContent = agent.name;
-          select.appendChild(option);
-        });
-      }
-
-      // ✅ 7. تعريف الدالة loadAgentsOptions (للتهيئة العامة كذلك)
-      async function loadAgentsOptions() {
-        return loadAgentsForMessage();
       }
     </script>
   </body>
