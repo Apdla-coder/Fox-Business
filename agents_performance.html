@@ -147,7 +147,10 @@
           <th>المحصل الكلي</th>
           <th>المتبقي الكلي</th>
           <th>حالة اليوم</th>
-          <th>تسجيل دخول</th>
+          <th>أول تسجيل دخول</th>
+          <th>موقع أول دخول</th>
+
+          <th>آخر تسجيل دخول</th>
           <th>تتبع مباشر</th>
         </tr>
       </thead>
@@ -251,11 +254,19 @@
           const table = document.getElementById("agentsTable");
           table.innerHTML = "";
 
-          const today = new Date();
-          const todayStart = new Date(today.setHours(0, 0, 0, 0)).toISOString();
-          const todayEnd = new Date(
-            today.setHours(23, 59, 59, 999)
-          ).toISOString();
+          // ✅ توقيت اليوم من 6 صباحًا بتوقيت القاهرة
+          const now = new Date();
+          const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+          const cairoOffsetMs = 3 * 60 * 60 * 1000;
+          const nowCairo = new Date(utc + cairoOffsetMs);
+          let start = new Date(nowCairo);
+          start.setHours(6, 0, 0, 0);
+          if (nowCairo.getHours() < 6) {
+            start.setDate(start.getDate() - 1);
+          }
+          const end = new Date(start.getTime() + 24 * 60 * 60 * 1000);
+          const todayStart = start.toISOString();
+          const todayEnd = end.toISOString();
 
           for (const agent of agents) {
             const { data: agentCustomers } = await supabase
@@ -292,36 +303,57 @@
               0
             );
 
-            const { data: locations, error: locError } = await supabase
+            // ✅ جلب أول تسجيل دخول
+            const { data: firstLoc } = await supabase
               .from("agent_locations")
               .select("*")
               .eq("agent_id", agent.id)
+              .gte("timestamp", todayStart)
+              .lte("timestamp", todayEnd)
+              .order("timestamp", { ascending: true })
+              .limit(1);
+
+            // ✅ جلب آخر تسجيل دخول
+            const { data: lastLoc } = await supabase
+              .from("agent_locations")
+              .select("*")
+              .eq("agent_id", agent.id)
+              .gte("timestamp", todayStart)
+              .lte("timestamp", todayEnd)
               .order("timestamp", { ascending: false })
               .limit(1);
 
-            if (locError) {
-              console.error("❌ خطأ في تحميل الموقع:", locError);
-            }
+            const firstLocation = firstLoc?.[0];
+            const lastLocation = lastLoc?.[0];
 
-            let locationDisplay = "⏳ لم يتم تسجيل الموقع";
-            let lastLoginTime = "⏳ لم يسجل بعد";
-            const latestLocation = locations?.[0];
+            let firstLoginTime = "⏳";
+            let firstLocationDisplay = "⏳";
+            let lastLoginTime = "⏳";
+            let lastLocationDisplay = "⏳";
 
-            if (latestLocation) {
-              console.log("📍 آخر موقع مسجل:", latestLocation);
-              lastLoginTime = `👋 ${new Date(
-                latestLocation.timestamp
+            if (firstLocation) {
+              firstLoginTime = `🕒 ${new Date(
+                firstLocation.timestamp
               ).toLocaleString("ar-EG")}`;
+              if (firstLocation.latitude && firstLocation.longitude) {
+                const lat = firstLocation.latitude;
+                const lng = firstLocation.longitude;
+                firstLocationDisplay = `<a href="https://www.google.com/maps?q=${lat},${lng}" target="_blank" style="color:blue;text-decoration:underline">📍 خريطة</a>`;
+              }
             }
 
-            if (latestLocation?.latitude && latestLocation?.longitude) {
-              const lat = latestLocation.latitude;
-              const lng = latestLocation.longitude;
-
-              locationDisplay =
-                window.innerWidth <= 768
-                  ? `<a href="https://www.google.com/maps?q=${lat},${lng}" target="_blank" style="color:blue;text-decoration:underline">📍 عرض على الخريطة</a>`
-                  : `<iframe src="https://www.google.com/maps?q=${lat},${lng}&output=embed" style="border:0;width:100%;height:150px;" allowfullscreen loading="lazy"></iframe>`;
+            if (lastLocation) {
+              lastLoginTime = `👋 ${new Date(
+                lastLocation.timestamp
+              ).toLocaleString("ar-EG")}`;
+              if (lastLocation.latitude && lastLocation.longitude) {
+                const lat = lastLocation.latitude;
+                const lng = lastLocation.longitude;
+                lastLocationDisplay =
+                  window.innerWidth <= 768
+                    ? `<a href="https://www.google.com/maps?q=${lat},${lng}" target="_blank" style="color:blue;text-decoration:underline">📍 عرض</a>`
+                    : `<iframe src="https://www.google.com/maps?q=${lat},${lng}&output=embed" style="border:0;width:100%;height:150px;" allowfullscreen loading="lazy"></iframe>`;
+              }
             }
 
             const columns = [
@@ -333,12 +365,14 @@
               `${totalCollectedAll.toFixed(2)} ج.م`,
               `${totalPendingAll.toFixed(2)} ج.م`,
               collectedTodayCount > 0 ? "✅" : "⏳",
+              firstLoginTime,
+              firstLocationDisplay,
               lastLoginTime,
-              locationDisplay,
+              lastLocationDisplay,
             ];
 
             const labels = [
-              "اسم المندوب",
+              "شيت المندوب",
               "عدد الفواتير اليوم",
               "المبلغ المحصل اليوم",
               "إجمالي فواتيره",
@@ -346,7 +380,9 @@
               "المحصل الكلي",
               "المتبقي الكلي",
               "حالة اليوم",
-              "تسجيل دخول",
+              "أول تسجيل دخول",
+              "موقع أول دخول",
+              "آخر تسجيل دخول",
               "تتبع مباشر",
             ];
 
@@ -364,8 +400,6 @@
           alert("❌ حدث خطأ غير متوقع أثناء تحميل الجدول");
         }
       }
-
-      // ✅ إرسال رسالة
       async function sendAgentMessage() {
         const title = document.getElementById("sendTitle").value.trim();
         const body = document.getElementById("sendBody").value.trim();
@@ -405,7 +439,6 @@
         }
       }
 
-      // ✅ تحميل قائمة المناديب
       async function loadAgentsForMessage() {
         const select = document.getElementById("sendAgentSelect");
         select.innerHTML = "";
