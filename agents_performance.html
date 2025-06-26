@@ -250,14 +250,19 @@
           const { data: agents } = await supabase.from("agents").select("*");
           const table = document.getElementById("agentsTable");
           table.innerHTML = "";
+
           const today = new Date();
-          const todayString = today.toISOString().split("T")[0];
+          const todayStart = new Date(today.setHours(0, 0, 0, 0)).toISOString();
+          const todayEnd = new Date(
+            today.setHours(23, 59, 59, 999)
+          ).toISOString();
 
           for (const agent of agents) {
             const { data: agentCustomers } = await supabase
               .from("customers")
               .select("due_amount, collection_status")
               .eq("agent_id", agent.id);
+
             let totalCollectedAll = 0,
               totalPendingAll = 0;
 
@@ -268,6 +273,7 @@
                 totalPendingAll += c.due_amount || 0;
               }
             });
+
             const agentInvoicesAllTime = agentCustomers?.length || 0;
             const agentCollectedInvoicesAllTime = agentCustomers.filter(
               (c) => c.collection_status === "تم التحصيل"
@@ -277,8 +283,8 @@
               .from("collections")
               .select("amount, collection_date")
               .eq("collected_by", agent.id)
-              .gte("collection_date", todayString)
-              .lt("collection_date", todayString + "T23:59:59");
+              .gte("collection_date", todayStart)
+              .lt("collection_date", todayEnd);
 
             const collectedTodayCount = agentCollectionsToday?.length || 0;
             const collectedTodayAmount = agentCollectionsToday?.reduce(
@@ -286,15 +292,28 @@
               0
             );
 
-            const { data: latestLocation } = await supabase
+            const { data: locations, error: locError } = await supabase
               .from("agent_locations")
               .select("*")
               .eq("agent_id", agent.id)
               .order("timestamp", { ascending: false })
-              .limit(1)
-              .single();
+              .limit(1);
+
+            if (locError) {
+              console.error("❌ خطأ في تحميل الموقع:", locError);
+            }
 
             let locationDisplay = "⏳ لم يتم تسجيل الموقع";
+            let lastLoginTime = "⏳ لم يسجل بعد";
+            const latestLocation = locations?.[0];
+
+            if (latestLocation) {
+              console.log("📍 آخر موقع مسجل:", latestLocation);
+              lastLoginTime = `👋 ${new Date(
+                latestLocation.timestamp
+              ).toLocaleString("ar-EG")}`;
+            }
+
             if (latestLocation?.latitude && latestLocation?.longitude) {
               const lat = latestLocation.latitude;
               const lng = latestLocation.longitude;
@@ -314,11 +333,10 @@
               `${totalCollectedAll.toFixed(2)} ج.م`,
               `${totalPendingAll.toFixed(2)} ج.م`,
               collectedTodayCount > 0 ? "✅" : "⏳",
-              agent.last_login
-                ? `👋 ${new Date(agent.last_login).toLocaleString()}`
-                : "⏳ لم يسجل بعد",
+              lastLoginTime,
               locationDisplay,
             ];
+
             const labels = [
               "اسم المندوب",
               "عدد الفواتير اليوم",
@@ -331,6 +349,7 @@
               "تسجيل دخول",
               "تتبع مباشر",
             ];
+
             const row = document.createElement("tr");
             columns.forEach((content, index) => {
               const td = document.createElement("td");

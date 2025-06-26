@@ -361,9 +361,9 @@
         customer_phone
       ) {
         const agent_id = localStorage.getItem("agent_id");
-        const note_text = document
-          .getElementById(`note_${customer_id}`)
-          .value.trim();
+        const noteField = document.getElementById(`note_${customer_id}`);
+        const note_text = noteField.value.trim();
+
         if (!note_text) {
           alert("⚠️ اكتب ملاحظة أولًا");
           return;
@@ -379,10 +379,18 @@
           console.error(error);
         } else {
           alert("✅ تم حفظ الملاحظة بنجاح");
-          document.getElementById(`note_${customer_id}`).value = "";
+          // ✅ ملاحظة تظل موجودة ولا يتم مسحها
+          // تحديث نسخة الملاحظة المحفوظة محليًا كذلك
+          const existingNote = notesData.find(
+            (n) => n.customer_phone === customer_phone
+          );
+          if (existingNote) {
+            existingNote.note_text = note_text;
+          } else {
+            notesData.push({ customer_phone, note_text });
+          }
         }
       };
-
       // ⚡️ تحميل العملاء
       async function loadCustomers(agent_id) {
         const table = document.getElementById("customersTable");
@@ -680,8 +688,7 @@
         window.scrollTo({ top: 0, behavior: "smooth" });
       });
 
-      // ⚡️ تحديث آخر ظهور وموقع المندوب
-      // ⚡️ تحديث آخر ظهور وموقع المندوب - يتم التسجيل مرة واحدة يومياً
+      // ⚡️ تحديث الموقع الحالي للمندوب - يظهر في كل مرة يسجل فيها دخول (بعد الموافقة)
       async function updateLastLoginWithLocation(agent_id) {
         if (!navigator.geolocation) {
           alert("🌍 متصفحك لا يدعم تحديد الموقع");
@@ -694,7 +701,7 @@
               const latitude = position.coords.latitude;
               const longitude = position.coords.longitude;
 
-              // ✅ حفظ الموقع الحالي
+              // ✅ حفظ الموقع الحالي في جدول agent_locations
               const { error: locationError } = await supabase
                 .from("agent_locations")
                 .insert([
@@ -702,72 +709,13 @@
                     agent_id,
                     latitude,
                     longitude,
-                    timestamp: new Date().toISOString(),
                   },
                 ]);
 
               if (locationError) {
                 console.error("❌ خطأ أثناء حفظ الموقع:", locationError);
               } else {
-                console.log("✅ تم حفظ الموقع بنجاح:", {
-                  latitude,
-                  longitude,
-                });
-              }
-
-              // ✅ جلب آخر ظهور
-              const { data: agentData, error: fetchError } = await supabase
-                .from("agents")
-                .select("last_login")
-                .eq("id", agent_id)
-                .single();
-
-              if (fetchError) {
-                console.error("❌ خطأ أثناء جلب آخر ظهور:", fetchError);
-              }
-
-              const now = new Date();
-              const egyptTime = new Date(now.getTime() + 2 * 60 * 60 * 1000);
-              const currentHour = egyptTime.getUTCHours();
-              const currentDate = egyptTime.getUTCDate();
-
-              // ✅ تحديد حدود الوردية (6 صباحًا)
-              const shiftStart = new Date(egyptTime);
-              shiftStart.setUTCHours(6, 0, 0, 0);
-              if (currentHour < 6) {
-                // قبل الساعة 6 يعني نرجع لليوم السابق
-                shiftStart.setUTCDate(currentDate - 1);
-              }
-
-              const shiftEnd = new Date(shiftStart);
-              shiftEnd.setUTCDate(shiftEnd.getUTCDate() + 1);
-
-              // ✅ التأكد لو محدث قبل كده
-              let shouldUpdate = true;
-
-              if (agentData?.last_login) {
-                const lastLoginTime = new Date(agentData.last_login);
-                if (lastLoginTime >= shiftStart && lastLoginTime < shiftEnd) {
-                  shouldUpdate = false;
-                  console.log("ℹ️ آخر ظهور محدث مسبقًا للوردية الحاليّة");
-                }
-              }
-
-              if (shouldUpdate) {
-                const { error: loginError } = await supabase
-                  .from("agents")
-                  .update({ last_login: egyptTime.toISOString() })
-                  .eq("id", agent_id);
-
-                if (loginError) {
-                  console.error("❌ خطأ أثناء تحديث آخر ظهور:", loginError);
-                } else {
-                  console.log("✅ تم تحديث آخر ظهور للمندوب:", agent_id);
-                }
-              } else {
-                console.log(
-                  "ℹ️ لن يتم تحديث آخر ظهور، لأن الوردية الحاليّة مسجلة"
-                );
+                console.log("✅ تم حفظ الموقع بنجاح:", { latitude, longitude });
               }
 
               resolve(true);
@@ -780,51 +728,7 @@
           );
         });
       }
-      // ⚡️ تشغيل الصفحة
-      window.onload = async function () {
-        const agent_id = localStorage.getItem("agent_id");
-        if (!agent_id) {
-          alert("❌ليس لديك صلاحية");
-          return;
-        }
 
-        // ✅ تحديث آخر ظهور + الموقع (لو وافق)
-        const locationAllowed = await updateLastLoginWithLocation(agent_id);
-
-        if (locationAllowed) {
-          await loadCustomers(agent_id);
-          await loadAgentMessages(agent_id);
-          showRandomMotivationalMessage();
-        } else {
-          alert("⚠️ لن يتم تحديث آخر ظهور بدون الموافقة على الموقع");
-          await loadCustomers(agent_id);
-          await loadAgentMessages(agent_id);
-          showRandomMotivationalMessage();
-        }
-      };
-
-      // ⚡️ تشغيل الصفحة
-      window.onload = async function () {
-        const agent_id = localStorage.getItem("agent_id");
-        if (!agent_id) {
-          alert("❌ليس لديك صلاحية");
-          return;
-        }
-
-        // ✅ تحديث آخر ظهور + الموقع (لو وافق)
-        const locationAllowed = await updateLastLoginWithLocation(agent_id);
-
-        if (locationAllowed) {
-          await loadCustomers(agent_id);
-          await loadAgentMessages(agent_id);
-          showRandomMotivationalMessage();
-        } else {
-          alert("⚠️ لن يتم تحديث آخر ظهور بدون الموافقة على الموقع");
-          await loadCustomers(agent_id);
-          await loadAgentMessages(agent_id);
-          showRandomMotivationalMessage();
-        }
-      };
       window.requestStopService = async function (
         customer_id,
         customer_name,
@@ -872,6 +776,21 @@
           alert("❌ حدث خطأ غير متوقع أثناء تقديم الطلب");
           console.error(error);
         }
+      };
+      window.onload = async function () {
+        const agent_id = localStorage.getItem("agent_id");
+        if (!agent_id) {
+          alert("❌ليس لديك صلاحية");
+          return;
+        }
+
+        // ✅ تحديث الموقع عند الدخول
+        const locationAllowed = await updateLastLoginWithLocation(agent_id);
+
+        // ✅ تحميل البيانات بعد تسجيل الدخول والموقع
+        await loadCustomers(agent_id);
+        await loadAgentMessages(agent_id);
+        showRandomMotivationalMessage();
       };
     </script>
   </body>

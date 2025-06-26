@@ -190,20 +190,49 @@
         <a href="./dashboard.html"><h2>لوحة التحكم ⬅</h2></a>
       </div>
     </header>
-
-    <!-- =========== رفع بيانات العملاء =========== -->
-    <h2>رفع بيانات العملاء</h2>
+    <!-- اختيار مندوب، اختيار القسم، رفع الملف -->
+    <!-- <h2>رفع بيانات العملاء</h2>
     <div class="form-container">
       <label for="agentSelect">اختر المندوب:</label>
       <select id="agentSelect">
         <option value="">-- اختر --</option>
+      </select>
+      <label for="sectionSelect">اختر القسم:</label>
+      <select id="sectionSelect">
+        <option value="">-- اختر القسم --</option>
       </select>
       <label for="excelFile">ملف Excel:</label>
       <input type="file" id="excelFile" accept=".xls,.xlsx" />
       <button id="excelUploadButton">📤 رفع البيانات</button>
       <div id="uploadStatus"></div>
       <div id="uploadLoader" style="display: none">⏳ جاري رفع البيانات...</div>
+    </div> -->
+    <!-- إضافة قسم جديد -->
+
+    <!-- =========================== اختيار مندوب =========================== -->
+    <div id="adminAgentSelectContainer">
+      <h3>👔 اختر مندوب لعرض الجدول</h3>
+      <select id="adminAgentSelect">
+        <option value="">-- اختر مندوب --</option>
+      </select>
     </div>
+
+    <!-- =========================== الجدول القابل للتعديل =========================== -->
+    <table id="adminCustomersTable">
+      <thead>
+        <tr>
+          <th>القسم</th>
+          <th>اسم العميل</th>
+          <th>الهاتف</th>
+          <th>العنوان</th>
+          <th>المبلغ</th>
+          <th>الحالة</th>
+          <th>حفظ</th>
+        </tr>
+      </thead>
+
+      <tbody></tbody>
+    </table>
 
     <!-- =========== حذف البيانات =========== -->
     <h2>حذف كل البيانات</h2>
@@ -245,43 +274,38 @@
     <!-- =========== الجافا سكربت =========== -->
     <script type="module">
       import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
-      import * as XLSX from "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/+esm";
 
       const supabase = createClient(
         "https://vyhtsdqccyvygelekzey.supabase.co",
         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5aHRzZHFjY3l2eWdlbGVremV5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk3NTQwOTMsImV4cCI6MjA2NTMzMDA5M30.bRjHD6OkziXjfavEX-tA-6IFdag7KoFBqLRgNLqwcdg"
       );
 
-      window.onload = async () => {
-        await loadAgentsOptions();
-        attachEventListeners();
-      };
+      // =========== عند تحميل الصفحة ===========
+      window.addEventListener("load", async () => {
+        await loadAgentsForAdmin();
+        const adminAgentSelect = document.getElementById("adminAgentSelect");
+        adminAgentSelect?.addEventListener("change", (e) => {
+          if (e.target.value) {
+            loadCustomersForAdmin(e.target.value);
+          }
+        });
+      });
 
-      function attachEventListeners() {
-        document
-          .getElementById("excelUploadButton")
-          ?.addEventListener("click", uploadExcel);
-        document
-          .getElementById("clearButton")
-          ?.addEventListener("click", clearAllData);
-        document
-          .getElementById("addAgentButton")
-          ?.addEventListener("click", addAgent);
-      }
-
-      async function loadAgentsOptions() {
-        const select = document.getElementById("agentSelect");
+      // =========== تحميل قائمة المندوبين للمدير ===========
+      async function loadAgentsForAdmin() {
+        const select = document.getElementById("adminAgentSelect");
         if (!select) return;
 
-        select.innerHTML = '<option value="">-- اختر مندوب --</option>';
         const { data: agents, error } = await supabase
           .from("agents")
           .select("*");
         if (error) {
-          alert("❌ خطأ أثناء تحميل قائمة المندوبين");
+          console.error(error);
           return;
         }
-        agents?.forEach((agent) => {
+
+        select.innerHTML = '<option value="">-- اختر مندوب --</option>';
+        agents.forEach((agent) => {
           const option = document.createElement("option");
           option.value = agent.id;
           option.textContent = agent.name;
@@ -289,158 +313,208 @@
         });
       }
 
-      async function uploadExcel() {
-        const fileInput = document.getElementById("excelFile");
-        const loader = document.getElementById("uploadLoader");
-        const agent_id = document.getElementById("agentSelect").value;
+      // =========== تحميل العملاء على الجدول وتقسيمهم على حسب القسم ===========
+      async function loadCustomersForAdmin(agent_id) {
+        const tableBody = document.querySelector("#adminCustomersTable tbody");
+        tableBody.innerHTML = ""; // مسح الجدول قبل التعبئة
 
-        if (!agent_id) return setStatus("⚠️ اختر المندوب أولاً.", "red");
-        if (!fileInput.files.length)
-          return setStatus("📄 اختر ملف أولاً.", "red");
+        const { data: customers, error } = await supabase
+          .from("customers")
+          .select("*")
+          .eq("agent_id", agent_id)
+          .order("section", { ascending: true });
 
-        try {
-          loader.style.display = "block";
-          setStatus("", "");
-          const file = fileInput.files[0];
-          const data = new Uint8Array(await file.arrayBuffer());
-          const workbook = XLSX.read(data, { type: "array" });
-          const sheet = workbook.Sheets[workbook.SheetNames[0]];
-          const rows = XLSX.utils.sheet_to_json(sheet);
-
-          if (!rows.length)
-            return setStatus("❌ الملف فارغ أو التنسيق غير صحيح.", "red");
-
-          const currentMonth = new Date().toISOString().slice(0, 7);
-          const newCustomers = [];
-          const updates = [];
-
-          for (const row of rows) {
-            const phone = row.phone?.toString().trim();
-            const due_amount = Number(row.due_amount) || 0;
-
-            if (!phone || due_amount <= 0) continue;
-
-            const { data: existing } = await supabase
-              .from("customers")
-              .select("*")
-              .eq("phone", phone)
-              .eq("agent_id", agent_id)
-              .order("created_at", { ascending: false })
-              .limit(1)
-              .maybeSingle();
-
-            if (existing) {
-              if (existing.collection_status === "تم التحصيل") {
-                newCustomers.push({
-                  ...row,
-                  agent_id,
-                  billing_month: currentMonth,
-                  collection_status: "لم يتم التحصيل",
-                });
-              } else {
-                updates.push({
-                  id: existing.id,
-                  due_amount: (existing.due_amount || 0) + due_amount,
-                  billing_month: currentMonth,
-                });
-              }
-            } else {
-              newCustomers.push({
-                ...row,
-                agent_id,
-                billing_month: currentMonth,
-                collection_status: "لم يتم التحصيل",
-              });
-            }
-          }
-
-          if (newCustomers.length) {
-            const { error: insertError } = await supabase
-              .from("customers")
-              .insert(newCustomers);
-            if (insertError) {
-              return setStatus("❌ فشل إدخال البيانات الجديدة.", "red");
-            }
-          }
-
-          for (const u of updates) {
-            const { error: updateError } = await supabase
-              .from("customers")
-              .update({
-                due_amount: u.due_amount,
-                billing_month: u.billing_month,
-              })
-              .eq("id", u.id);
-            if (updateError) {
-              console.error(
-                `❌ فشل تحديث العميل ${u.id}:`,
-                updateError.message
-              );
-            }
-          }
-
-          setStatus("✅ تم رفع وتحديث البيانات بنجاح.", "green");
-          fileInput.value = "";
-        } catch (err) {
-          console.error("❌ حدث خطأ:", err.message);
-          setStatus("❌ حدث خطأ غير متوقع.", "red");
-        } finally {
-          loader.style.display = "none";
-        }
-      }
-
-      async function clearAllData() {
-        const status = document.getElementById("clearStatus");
-        if (!confirm("⚠️ هل أنت متأكد أنك تريد حذف جميع البيانات؟")) return;
-
-        await supabase.from("collections").delete().not("id", "is", null);
-        await supabase.from("customers").delete().not("id", "is", null);
-        status.innerText = "✅ تم حذف جميع البيانات بنجاح.";
-        status.style.color = "green";
-      }
-
-      function setStatus(msg, color) {
-        const el = document.getElementById("uploadStatus");
-        el.innerText = msg;
-        el.style.color = color;
-      }
-
-      async function addAgent() {
-        const name = document.getElementById("newAgentName").value.trim();
-        const email = document.getElementById("newAgentEmail").value.trim();
-        const password = document
-          .getElementById("newAgentPassword")
-          .value.trim();
-        const role = document.getElementById("newAgentRole").value;
-
-        const alertBox = document.getElementById("addAgentAlert");
-        if (!name || !email || !password) {
-          alertBox.innerText = "يرجى ملء جميع الحقول.";
-          alertBox.style.display = "block";
-          alertBox.style.backgroundColor = "#f8d7da";
-          alertBox.style.color = "#721c24";
+        if (error) {
+          alert("❌ حدث خطأ أثناء جلب العملاء");
+          console.error(error);
           return;
         }
 
-        const { error } = await supabase
-          .from("agents")
-          .insert([{ name, email, password, role }]);
-        if (error) {
-          alertBox.innerText = "حدث خطأ أثناء إضافة المندوب.";
-          alertBox.style.display = "block";
-          alertBox.style.backgroundColor = "#f8d7da";
-          alertBox.style.color = "#721c24";
-          console.error(error);
-        } else {
-          alertBox.innerText = "تمت إضافة المندوب بنجاح ✅";
-          alertBox.style.display = "block";
-          alertBox.style.backgroundColor = "#d4edda";
-          alertBox.style.color = "#155724";
-          document.getElementById("newAgentName").value = "";
-          document.getElementById("newAgentEmail").value = "";
-          document.getElementById("newAgentPassword").value = "";
+        if (!customers.length) {
+          tableBody.innerHTML = '<tr><td colspan="7">لا توجد عملاء</td></tr>';
+          return;
+        }
+
+        const groupedCustomers = customers.reduce((acc, cust) => {
+          const section = cust.section || "غير محدد";
+          if (!acc[section]) acc[section] = [];
+          acc[section].push(cust);
+          return acc;
+        }, {});
+
+        for (const sectionName in groupedCustomers) {
+          // سطر عنوان القسم
+          const sectionRow = document.createElement("tr");
+          sectionRow.innerHTML = `
+      <td colspan="7" style="background-color:#34495e;color:#fff">
+        📁 ${sectionName}
+        <input value="${sectionName}" data-oldname="${sectionName}" class="editSectionInput" />
+        <button class="saveSectionBtn" data-oldname="${sectionName}">💾 حفظ القسم</button>
+        <button class="addCustomerToSectionBtn" data-section="${sectionName}">➕ إضافة عميل</button>
+      </td>`;
+          tableBody.appendChild(sectionRow);
+
+          // سطور العملاء
+          groupedCustomers[sectionName].forEach((cust) => {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+        <td>${cust.section}</td>
+        <td><input value="${cust.name}" data-id="${
+              cust.id
+            }" data-field="name"/></td>
+        <td><input value="${cust.phone}" data-id="${
+              cust.id
+            }" data-field="phone"/></td>
+        <td><input value="${cust.address || ""}" data-id="${
+              cust.id
+            }" data-field="address"/></td>
+        <td><input value="${cust.due_amount}" data-id="${
+              cust.id
+            }" data-field="due_amount" type="number"/></td>
+        <td>
+            <select data-id="${cust.id}" data-field="collection_status">
+              <option ${
+                cust.collection_status === "تم التحصيل" ? "selected" : ""
+              }>تم التحصيل</option>
+              <option ${
+                cust.collection_status !== "تم التحصيل" ? "selected" : ""
+              }>لم يتم التحصيل</option>
+            </select>
+        </td>
+        <td>
+            <button data-id="${cust.id}" class="saveCustomerBtn">💾 حفظ</button>
+            <button data-id="${
+              cust.id
+            }" class="deleteCustomerBtn">🗑️ حذف</button>
+        </td>`;
+            tableBody.appendChild(row);
+          });
         }
       }
+
+      // =========== حفظ تعديل اسم القسم ===========
+      document
+        .querySelector("#adminCustomersTable")
+        ?.addEventListener("click", async (e) => {
+          if (e.target.classList.contains("saveSectionBtn")) {
+            const oldName = e.target.getAttribute("data-oldname");
+            const newName = e.target
+              .closest("tr")
+              .querySelector(".editSectionInput")
+              .value.trim();
+            if (!newName) return alert("❌ برجاء إدخال اسم القسم الجديد");
+
+            const { error } = await supabase
+              .from("customers")
+              .update({ section: newName })
+              .eq("section", oldName);
+
+            if (error) {
+              alert("❌ حدث خطأ أثناء تحديث القسم");
+              console.error(error);
+            } else {
+              alert("✅ تم تحديث القسم بنجاح");
+              loadCustomersForAdmin(
+                document.getElementById("adminAgentSelect").value
+              );
+            }
+          }
+        });
+
+      // =========== إضافة عميل لقسم محدد ===========
+      document
+        .querySelector("#adminCustomersTable")
+        ?.addEventListener("click", async (e) => {
+          if (e.target.classList.contains("addCustomerToSectionBtn")) {
+            const section = e.target.getAttribute("data-section"); // ✅ نأخذ القسم من العنصر
+            const agent_id = document.getElementById("adminAgentSelect").value;
+
+            const name = prompt(`👤 أدخل اسم العميل لقسم "${section}"`);
+            const phone = prompt(`📞 أدخل رقم الهاتف:`);
+            const address = prompt(`🏠 أدخل عنوان العميل:`);
+            const due_amount = parseFloat(prompt(`💵 أدخل المبلغ المستحق:`));
+
+            if (!name || !phone || !address || !due_amount) {
+              alert("❌ برجاء ملء جميع الحقول");
+              return;
+            }
+
+            const { error } = await supabase.from("customers").insert([
+              {
+                agent_id,
+                section,
+                name,
+                phone,
+                address,
+                due_amount,
+                billing_month: new Date().toISOString().slice(0, 7),
+                collection_status: "لم يتم التحصيل",
+              },
+            ]);
+
+            if (error) {
+              alert("❌ حدث خطأ أثناء إضافة العميل");
+              console.error(error);
+            } else {
+              alert("✅ تم إضافة العميل بنجاح");
+              loadCustomersForAdmin(agent_id);
+            }
+          }
+
+          // =========== حفظ تعديلات العملاء ===========
+          document
+            .querySelector("#adminCustomersTable")
+            ?.addEventListener("click", async (e) => {});
+
+          if (e.target.classList.contains("saveCustomerBtn")) {
+            const id = e.target.getAttribute("data-id");
+            const inputs = document.querySelectorAll(`[data-id="${id}"]`);
+
+            const updatedData = {};
+            inputs.forEach((input) => {
+              updatedData[input.getAttribute("data-field")] =
+                input.value.trim();
+            });
+            if (updatedData.due_amount) {
+              updatedData.due_amount = Number(updatedData.due_amount);
+            }
+
+            const { error } = await supabase
+              .from("customers")
+              .update(updatedData)
+              .eq("id", id);
+            if (error) {
+              alert("❌ حدث خطأ أثناء حفظ التعديلات");
+              console.error(error);
+            } else {
+              alert("✅ تم حفظ التعديلات بنجاح");
+            }
+          }
+        });
+
+      // =========== حذف العميل ===========
+      document
+        .querySelector("#adminCustomersTable")
+        ?.addEventListener("click", async (e) => {
+          if (e.target.classList.contains("deleteCustomerBtn")) {
+            const id = e.target.getAttribute("data-id");
+            if (!confirm("❓ هل أنت متأكد من حذف هذا العميل؟")) return;
+
+            const { error } = await supabase
+              .from("customers")
+              .delete()
+              .eq("id", id);
+            if (error) {
+              alert("❌ حدث خطأ أثناء الحذف");
+              console.error(error);
+            } else {
+              alert("✅ تم الحذف بنجاح");
+              loadCustomersForAdmin(
+                document.getElementById("adminAgentSelect").value
+              );
+            }
+          }
+        });
     </script>
   </body>
 </html>

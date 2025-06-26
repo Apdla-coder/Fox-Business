@@ -227,12 +227,12 @@
           <th>اسم العميل</th>
           <th>رقم الهاتف</th>
           <th>حالة الطلب</th>
-          <th>تاريخ الطلب</th>
+          <th>وقت الطلب</th>
+          <th>الإجراء</th>
         </tr>
       </thead>
       <tbody></tbody>
     </table>
-
     <!-- ✅ الجدول + العملاء -->
     <div id="customersSections"></div>
 
@@ -258,6 +258,7 @@
     </footer>
 
     <!-- ✅ السكربت -->
+    <!-- ✅ السكربت النهائي -->
     <script type="module">
       import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
@@ -268,7 +269,9 @@
 
       let customersData = [];
       let notesData = [];
+      let collectionsData = [];
 
+      // ==================== عند تحميل الصفحة ====================
       window.onload = async function () {
         const urlParams = new URLSearchParams(window.location.search);
         const agent_id = urlParams.get("agent_id");
@@ -276,17 +279,24 @@
           alert("لم يتم تحديد المندوب");
           return;
         }
+
         await loadAgentInfo(agent_id);
         await loadCustomers(agent_id);
-        await loadStopRequests(agent_id);
+
+        // ✅ تشغيل loadStopRequests فقط لو الجدول موجود
+        if (document.getElementById("stopRequestsTable")) {
+          await loadStopRequests(agent_id);
+        }
       };
 
+      // ==================== معلومات المندوب ====================
       async function loadAgentInfo(agent_id) {
         const { data, error } = await supabase
           .from("agents")
           .select("name")
           .eq("id", agent_id)
           .single();
+
         if (error || !data) {
           alert("تعذر تحميل بيانات المندوب");
           return;
@@ -295,6 +305,7 @@
           "شيت العملاء: " + data.name;
       }
 
+      // ==================== العملاء ====================
       async function loadCustomers(agent_id) {
         try {
           const { data: customers, error: customerError } = await supabase
@@ -307,22 +318,28 @@
             .from("agent_notes")
             .select("customer_phone, note_text")
             .eq("agent_id", agent_id);
+          const { data: collections, error: collectionsError } = await supabase
+            .from("collections")
+            .select("customer_id, collection_date")
+            .eq("collected_by", agent_id);
 
-          if (customerError || notesError) {
-            throw customerError || notesError;
+          if (customerError || notesError || collectionsError) {
+            throw customerError || notesError || collectionsError;
           }
 
           customersData = customers;
           notesData = notes;
+          collectionsData = collections;
 
-          displayCustomers(customersData, notesData);
+          displayCustomers(customersData, notesData, collectionsData);
         } catch (err) {
           console.error("❌ خطأ:", err);
-          alert("❌ حدث خطأ أثناء تحميل العملاء أو الملاحظات");
+          alert("❌ حدث خطأ أثناء تحميل البيانات");
         }
       }
 
-      function displayCustomers(data, notes) {
+      // ==================== عرض العملاء ====================
+      function displayCustomers(data, notes, collections) {
         const container = document.getElementById("customersSections");
         container.innerHTML = "";
         let totalDueAmount = 0;
@@ -344,15 +361,16 @@
 
             var table = document.createElement("table");
             table.innerHTML = `
-    <thead>
-      <tr>
-        <th>اسم العميل</th>
-        <th>رقم الهاتف</th>
-        <th>قيمة الفاتورة</th>
-        <th>حالة التحصيل</th>
-        <th>ملاحظة المندوب</th>
-      </tr>
-    </thead>`;
+        <thead>
+            <tr>
+              <th>اسم العميل</th>
+              <th>رقم الهاتف</th>
+              <th>قيمة الفاتورة</th>
+              <th>حالة التحصيل</th>
+              <th>وقت آخر تحصيل</th>
+              <th>ملاحظة المندوب</th>
+            </tr>
+        </thead>`;
             var tbody = document.createElement("tbody");
             table.appendChild(tbody);
             container.appendChild(table);
@@ -360,17 +378,33 @@
 
           const statusClass =
             customer.collection_status === "تم التحصيل" ? "paid" : "unpaid";
+
           const note =
             notes.find((n) => n.customer_phone === customer.phone)?.note_text ||
             "";
 
+          const customerCollections = collections.filter(
+            (c) => c.customer_id === customer.id
+          );
+          const latestCollectionDate = customerCollections.length
+            ? new Date(
+                customerCollections.reduce((max, c) =>
+                  new Date(c.collection_date) > new Date(max.collection_date)
+                    ? c
+                    : max
+                ).collection_date
+              ).toLocaleString("ar-EG", { timeZone: "Africa/Cairo" })
+            : "-";
+
           const row = document.createElement("tr");
           row.innerHTML = `
-  <td>${customer.name}</td>
-  <td>${customer.phone}</td>
-  <td>${customer.due_amount} ج.م</td>
-  <td><span class="status ${statusClass}">${customer.collection_status}</span></td>
-  <td>${note}</td>`;
+      <td>${customer.name}</td>
+      <td>${customer.phone}</td>
+      <td>${customer.due_amount} ج.م</td>
+      <td><span class="status ${statusClass}">${customer.collection_status}</span></td>
+      <td>${latestCollectionDate}</td>
+      <td>${note}</td>`;
+
           table.querySelector("tbody").appendChild(row);
         }
 
@@ -381,8 +415,8 @@
         )} ج.م`;
       }
 
-      // ✅ البحث
-      document.getElementById("searchButton").addEventListener("click", () => {
+      // ==================== البحث ====================
+      document.getElementById("searchButton")?.addEventListener("click", () => {
         const query = document.getElementById("searchInput").value.trim();
         if (!query) {
           alert("⚠️ أدخل الاسم أو الرقم للبحث");
@@ -395,20 +429,28 @@
           alert("❌ لم يتم العثور على عملاء");
           return;
         }
-        displayCustomers(filteredCustomers, notesData);
+        displayCustomers(filteredCustomers, notesData, collectionsData);
       });
 
-      // ✅ السهم للرجوع لأعلى
+      // ==================== السهم للرجوع لأعلى ====================
       const scrollToTopBtn = document.getElementById("scrollToTopBtn");
       window.addEventListener("scroll", () => {
         scrollToTopBtn.style.display = window.scrollY > 300 ? "block" : "none";
       });
-      scrollToTopBtn.addEventListener("click", () => {
+      scrollToTopBtn?.addEventListener("click", () => {
         window.scrollTo({ top: 0, behavior: "smooth" });
       });
 
-      // ✅ جلب الطلبات من الجدول stop_requests
+      // ==================== الطلبات (إن وجدت على الصفحة) ====================
       async function loadStopRequests(agent_id) {
+        const table = document.getElementById("stopRequestsTable");
+        if (!table) {
+          console.warn(
+            "⚠️ الجدول stopRequestsTable غير موجود على هذه الصفحة، يتم تخطي الدالة."
+          );
+          return; // ✅ إنهاء الدالة وعدم محاولة التعامل معها
+        }
+
         const { data, error } = await supabase
           .from("stop_requests")
           .select("*")
@@ -422,14 +464,13 @@
         }
 
         if (data.length === 0) {
-          document.getElementById("stopRequestsTable").style.display = "none";
+          table.style.display = "none";
           return;
         }
 
-        const table = document.getElementById("stopRequestsTable");
         table.style.display = "table";
         const tbody = table.querySelector("tbody");
-        tbody.innerHTML = "";
+        tbody.innerHTML = ""; // ✅ الآن مافيش خطأ لأن الجدول موجود
 
         data.forEach((request) => {
           const row = document.createElement("tr");
@@ -437,7 +478,9 @@
       <td>${request.customer_name}</td>
       <td>${request.customer_phone}</td>
       <td>${request.status}</td>
-      <td>${new Date(request.request_date).toLocaleString("ar-EG")}</td>
+      <td>${new Date(request.request_date).toLocaleString("ar-EG", {
+        timeZone: "Africa/Cairo",
+      })}</td>
       <td><button class="stop-button">تم الوقف</button></td>
     `;
 
@@ -458,9 +501,9 @@
         });
       }
 
+      // ==================== نقل الطلب لجدول disconnected_lines ====================
       async function moveToDisconnectedLines(request) {
         try {
-          // ✅ نقل الطلب إلى الجدول disconnected_lines
           const { error: insertError } = await supabase
             .from("disconnected_lines")
             .insert([
@@ -478,7 +521,6 @@
             return false;
           }
 
-          // ✅ حذف الطلب من الجدول stop_requests
           const { error: deleteError } = await supabase
             .from("stop_requests")
             .delete()

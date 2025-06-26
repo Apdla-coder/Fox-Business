@@ -5,6 +5,7 @@
     <title>📞 الخطوط المتوقفة</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <style>
+      /* =========================== مظهر عام =========================== */
       body {
         font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
         margin: 0;
@@ -12,10 +13,14 @@
         background: linear-gradient(135deg, #2c3e50, #4ca1af);
         color: #333;
       }
-      h1 {
+      h1,
+      h3 {
         text-align: center;
         color: #fff;
+        margin: 10px 0;
       }
+
+      /* =========================== الجدول =========================== */
       table {
         width: 100%;
         border-collapse: collapse;
@@ -30,16 +35,142 @@
         padding: 14px;
         text-align: center;
         border-bottom: 1px solid #eee;
+        font-size: 14px;
       }
       th {
         background-color: #f8f9fa;
+        color: #333;
+        font-weight: bold;
       }
+      /* =========== تنسيق اللنكات =========== */
+
+      a {
+        text-decoration: none;
+        color: inherit;
+        display: block;
+      }
+      a:hover {
+        color: #ff9800;
+        text-decoration: underline;
+      }
+
+      .cards-container a:hover .card {
+        transform: translateY(-5px);
+        box-shadow: 0px 12px 25px rgba(0, 0, 0, 0.3);
+      }
+
+      .cards-container a:hover {
+        color: #2980b9;
+      }
+
+      /* =========================== الحالة =========================== */
+      .status {
+        font-weight: bold;
+        padding: 8px 15px;
+        border-radius: 20px;
+        display: inline-block;
+        font-size: 13px;
+      }
+      .paid {
+        background-color: #2ecc71;
+        color: #fff;
+      }
+      .unpaid {
+        background-color: #e74c3c;
+        color: #fff;
+      }
+
+      /* =========================== عناوين الأقسام =========================== */
       .section-header {
+        background: #f1f1f1;
         font-weight: bold;
         text-align: right;
         font-size: 16px;
         padding: 12px 20px;
         color: #2c3e50;
+        border-radius: 8px;
+        margin: 30px 0 10px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+
+      /* =========================== شريط البحث =========================== */
+      #searchBarContainer {
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        background-color: #fff;
+        padding: 10px;
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        align-items: center;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+      }
+      #searchInput {
+        padding: 10px;
+        flex: 1;
+        max-width: 300px;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        font-size: 14px;
+      }
+      #searchButton {
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-weight: bold;
+        font-size: 14px;
+        background: #27ae60;
+        color: #fff;
+        border: none;
+        cursor: pointer;
+        transition: background 0.3s;
+      }
+      #searchButton:hover {
+        background: #1e8449;
+      }
+
+      /* =========================== زر الرجوع لأعلى =========================== */
+      #scrollToTopBtn {
+        position: fixed;
+        bottom: 30px;
+        left: 30px;
+        font-size: 22px;
+        padding: 12px 15px;
+        border-radius: 50%;
+        border: none;
+        background-color: #3498db;
+        color: #fff;
+        cursor: pointer;
+        display: none;
+        z-index: 1001;
+        transition: background 0.3s;
+      }
+      #scrollToTopBtn:hover {
+        background-color: #2980b9;
+      }
+
+      /* =========================== مظهر موبايل =========================== */
+      @media (max-width: 768px) {
+        table,
+        th,
+        td {
+          font-size: 13px;
+          padding: 10px;
+        }
+        .section-header {
+          font-size: 15px;
+          padding: 10px;
+        }
+        #searchInput {
+          font-size: 13px;
+          max-width: 100%;
+        }
+        #searchButton {
+          font-size: 13px;
+          padding: 8px 15px;
+        }
       }
     </style>
   </head>
