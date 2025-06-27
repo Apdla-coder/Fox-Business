@@ -388,12 +388,23 @@
           );
           const latestCollectionDate = customerCollections.length
             ? new Date(
-                customerCollections.reduce((max, c) =>
-                  new Date(c.collection_date) > new Date(max.collection_date)
-                    ? c
-                    : max
-                ).collection_date
-              ).toLocaleString("ar-EG", { timeZone: "Africa/Cairo" })
+                new Date(
+                  customerCollections.reduce((max, c) =>
+                    new Date(c.collection_date) > new Date(max.collection_date)
+                      ? c
+                      : max
+                  ).collection_date
+                ).getTime() +
+                  3 * 60 * 60 * 1000 // ✅ إضافة 3 ساعات
+              ).toLocaleString("ar-EG", {
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit",
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+                hour12: false,
+              })
             : "-";
 
           const row = document.createElement("tr");

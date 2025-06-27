@@ -270,9 +270,7 @@
       <div>خدمة العملاء: 01212555345</div>
     </footer>
 
-    <!-- =========== الجافا سكربت =========== -->
     <script type="module">
-      // ✅ Supabase Client Initialization
       import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
       const supabase = createClient(
@@ -280,7 +278,6 @@
         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5aHRzZHFjY3l2eWdlbGVremV5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk3NTQwOTMsImV4cCI6MjA2NTMzMDA5M30.bRjHD6OkziXjfavEX-tA-6IFdag7KoFBqLRgNLqwcdg"
       );
 
-      // ✅ تحميل المندوبين عند بداية الصفحة
       window.addEventListener("load", async () => {
         await loadAgentsForAdmin();
         document
@@ -321,7 +318,6 @@
           .order("section", { ascending: true });
 
         if (error) return alert("❌ حدث خطأ أثناء جلب العملاء");
-
         if (!customers.length) {
           tableBody.innerHTML = '<tr><td colspan="7">لا توجد عملاء</td></tr>';
           return;
@@ -337,46 +333,40 @@
         for (const sectionName in groupedCustomers) {
           const sectionRow = document.createElement("tr");
           sectionRow.innerHTML = `
-      <td colspan="7" style="background-color:#34495e;color:#fff">
-        📁 ${sectionName}
-        <input value="${sectionName}" data-oldname="${sectionName}" class="editSectionInput" />
-        <button class="saveSectionBtn" data-oldname="${sectionName}">💾 حفظ القسم</button>
-        <button class="addCustomerToSectionBtn" data-section="${sectionName}">➕ إضافة عميل</button>
-      </td>`;
+<td colspan="7" style="background-color:#34495e;color:#fff">
+📁 ${sectionName}
+<input value="${sectionName}" data-oldname="${sectionName}" class="editSectionInput" />
+<button class="saveSectionBtn" data-oldname="${sectionName}">💾 حفظ القسم</button>
+<button class="addCustomerToSectionBtn" data-section="${sectionName}">➕ إضافة عميل</button>
+</td>`;
           tableBody.appendChild(sectionRow);
 
           groupedCustomers[sectionName].forEach((cust) => {
             const row = document.createElement("tr");
             row.innerHTML = `
-        <td>${cust.section}</td>
-        <td><input value="${cust.name}" data-id="${
-              cust.id
-            }" data-field="name"/></td>
-        <td><input value="${cust.phone}" data-id="${
-              cust.id
-            }" data-field="phone"/></td>
-        <td><input value="${cust.address || ""}" data-id="${
+<td>${cust.section}</td>
+<td><input value="${cust.name}" data-id="${cust.id}" data-field="name"/></td>
+<td><input value="${cust.phone}" data-id="${cust.id}" data-field="phone"/></td>
+<td><input value="${cust.address || ""}" data-id="${
               cust.id
             }" data-field="address"/></td>
-        <td><input value="${cust.due_amount}" data-id="${
+<td><input type="number" value="${cust.due_amount}" data-id="${
               cust.id
-            }" data-field="due_amount" type="number"/></td>
-        <td>
-            <select data-id="${cust.id}" data-field="collection_status">
-              <option ${
-                cust.collection_status === "تم التحصيل" ? "selected" : ""
-              }>تم التحصيل</option>
-              <option ${
-                cust.collection_status !== "تم التحصيل" ? "selected" : ""
-              }>لم يتم التحصيل</option>
-            </select>
-        </td>
-        <td>
-            <button data-id="${cust.id}" class="saveCustomerBtn">💾 حفظ</button>
-            <button data-id="${
-              cust.id
-            }" class="deleteCustomerBtn">🗑️ حذف</button>
-        </td>`;
+            }" data-field="due_amount"/></td>
+<td>
+  <select data-id="${cust.id}" data-field="collection_status">
+    <option ${
+      cust.collection_status === "تم التحصيل" ? "selected" : ""
+    }>تم التحصيل</option>
+    <option ${
+      cust.collection_status !== "تم التحصيل" ? "selected" : ""
+    }>لم يتم التحصيل</option>
+  </select>
+</td>
+<td>
+  <button class="saveCustomerBtn" data-id="${cust.id}">💾 حفظ</button>
+  <button class="deleteCustomerBtn" data-id="${cust.id}">🗑️ حذف</button>
+</td>`;
             tableBody.appendChild(row);
           });
         }
@@ -400,14 +390,12 @@
         });
       }
 
-      // 🔍 البحث وتصفية حسب القسم
-      const searchInput = document.getElementById("searchInput");
-      const sectionFilter = document.getElementById("sectionFilter");
-
-      if (searchInput && sectionFilter) {
-        searchInput.addEventListener("keyup", applyFilters);
-        sectionFilter.addEventListener("change", applyFilters);
-      }
+      document
+        .getElementById("searchInput")
+        ?.addEventListener("keyup", applyFilters);
+      document
+        .getElementById("sectionFilter")
+        ?.addEventListener("change", applyFilters);
 
       function applyFilters() {
         const filter = document
@@ -416,41 +404,178 @@
         const selectedSection = document.getElementById("sectionFilter").value;
         const rows = document.querySelectorAll("#adminCustomersTable tbody tr");
 
-        let currentSectionVisible = true;
-        let currentSectionName = "";
-
+        let showSection = true;
         rows.forEach((row) => {
           const isSectionRow = row.querySelector("td")?.colSpan === 7;
-
           if (isSectionRow) {
-            currentSectionName = row.textContent.trim();
-            if (
+            const sectionText = row.textContent.trim();
+            showSection =
               selectedSection === "all" ||
-              currentSectionName.includes(selectedSection)
-            ) {
-              row.style.display = "";
-              currentSectionVisible = true;
-            } else {
+              sectionText.includes(selectedSection);
+            row.style.display = showSection ? "" : "none";
+          } else {
+            if (!showSection) {
               row.style.display = "none";
-              currentSectionVisible = false;
+              return;
             }
-            return;
+            const name =
+              row.cells[1]?.querySelector("input")?.value.toLowerCase() || "";
+            const phone =
+              row.cells[2]?.querySelector("input")?.value.toLowerCase() || "";
+            row.style.display =
+              name.includes(filter) || phone.includes(filter) ? "" : "none";
           }
-
-          if (!currentSectionVisible) {
-            row.style.display = "none";
-            return;
-          }
-
-          const name =
-            row.cells[1]?.querySelector("input")?.value.toLowerCase() || "";
-          const phone =
-            row.cells[2]?.querySelector("input")?.value.toLowerCase() || "";
-
-          row.style.display =
-            name.includes(filter) || phone.includes(filter) ? "" : "none";
         });
       }
+
+      document
+        .querySelector("#adminCustomersTable")
+        ?.addEventListener("click", async (e) => {
+          const id = e.target.getAttribute("data-id");
+
+          if (e.target.classList.contains("saveCustomerBtn")) {
+            const row = e.target.closest("tr");
+            const inputs = row.querySelectorAll("[data-field]");
+
+            const updatedData = {};
+            inputs.forEach((input) => {
+              const field = input.getAttribute("data-field");
+              updatedData[field] = input.value.trim();
+            });
+            if (updatedData.due_amount) {
+              updatedData.due_amount = Number(updatedData.due_amount);
+            }
+
+            const { error } = await supabase
+              .from("customers")
+              .update(updatedData)
+              .eq("id", id);
+            if (error) {
+              alert("❌ حدث خطأ أثناء حفظ التعديلات");
+            } else {
+              e.target.textContent = "✅ تم";
+              setTimeout(() => (e.target.textContent = "💾 حفظ"), 1500);
+            }
+          }
+
+          if (e.target.classList.contains("deleteCustomerBtn")) {
+            if (confirm("⚠️ هل تريد حذف العميل؟")) {
+              const { error } = await supabase
+                .from("customers")
+                .delete()
+                .eq("id", id);
+              if (error) alert("❌ حدث خطأ أثناء الحذف");
+              else e.target.closest("tr").remove();
+            }
+          }
+
+          if (e.target.classList.contains("saveSectionBtn")) {
+            const oldName = e.target.getAttribute("data-oldname");
+            const input =
+              e.target.parentElement.querySelector(".editSectionInput");
+            const newName = input.value.trim();
+            if (!newName || newName === oldName) return;
+
+            const { error } = await supabase
+              .from("customers")
+              .update({ section: newName })
+              .eq("section", oldName);
+            if (error) alert("❌ فشل تعديل اسم القسم");
+            else {
+              alert("✅ تم تعديل القسم بنجاح");
+              loadCustomersForAdmin(
+                document.getElementById("adminAgentSelect").value
+              );
+            }
+          }
+
+          if (e.target.classList.contains("addCustomerToSectionBtn")) {
+            const section = e.target.getAttribute("data-section");
+            const agent_id = document.getElementById("adminAgentSelect").value;
+            if (!agent_id) return alert("❌ لم يتم اختيار مندوب");
+
+            const name = prompt("أدخل اسم العميل:");
+            if (!name) return;
+
+            const phone = prompt("رقم الهاتف:");
+            const address = prompt("العنوان:");
+            const due_amount = prompt("المبلغ المستحق:", "0");
+
+            const { error } = await supabase.from("customers").insert({
+              name,
+              phone,
+              address,
+              due_amount: Number(due_amount),
+              section,
+              agent_id,
+              collection_status: "لم يتم التحصيل",
+            });
+
+            if (error) alert("❌ فشل في إضافة العميل");
+            else {
+              alert("✅ تم إضافة العميل بنجاح");
+              loadCustomersForAdmin(agent_id);
+            }
+          }
+        });
+
+      document
+        .getElementById("addAgentButton")
+        ?.addEventListener("click", async () => {
+          const name = document.getElementById("newAgentName").value.trim();
+          const email = document.getElementById("newAgentEmail").value.trim();
+          const password = document
+            .getElementById("newAgentPassword")
+            .value.trim();
+          const role = document.getElementById("newAgentRole").value;
+          const alertBox = document.getElementById("addAgentAlert");
+
+          if (!name || !email || !password) {
+            alertBox.textContent = "❌ يرجى ملء جميع الحقول";
+            alertBox.style.backgroundColor = "crimson";
+            alertBox.style.display = "block";
+            return;
+          }
+
+          const { error } = await supabase
+            .from("agents")
+            .insert([{ name, email, password, role }]);
+          if (error) {
+            alertBox.textContent = "❌ فشل في الإضافة";
+            alertBox.style.backgroundColor = "crimson";
+          } else {
+            alertBox.textContent = "✅ تم إضافة المندوب";
+            alertBox.style.backgroundColor = "green";
+            document.getElementById("newAgentName").value = "";
+            document.getElementById("newAgentEmail").value = "";
+            document.getElementById("newAgentPassword").value = "";
+            await loadAgentsForAdmin();
+          }
+
+          alertBox.style.display = "block";
+        });
+
+      document
+        .getElementById("clearButton")
+        ?.addEventListener("click", async () => {
+          if (confirm("⚠️ هل تريد حذف كل العملاء؟")) {
+            const { error } = await supabase
+              .from("customers")
+              .delete()
+              .neq("id", 0);
+            const status = document.getElementById("clearStatus");
+
+            if (error) {
+              status.textContent = "❌ فشل الحذف";
+              status.style.color = "red";
+            } else {
+              status.textContent = "✅ تم حذف كل البيانات";
+              status.style.color = "lightgreen";
+              document.querySelector("#adminCustomersTable tbody").innerHTML =
+                "";
+            }
+          }
+        });
     </script>
   </body>
 </html>
