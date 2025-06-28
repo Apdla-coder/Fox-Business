@@ -207,7 +207,25 @@
     <!-- ✅ العنوان -->
     <h1 id="agentName">جاري التحميل...</h1>
     <h3 id="totalDue">جاري حساب الإجمالي...</h3>
-
+    <div style="text-align: center; margin: 10px 0">
+      <button
+        id="downloadNotesBtn"
+        style="
+          background-color: #f39c12;
+          color: #fff;
+          border: none;
+          padding: 10px 25px;
+          border-radius: 8px;
+          font-size: 15px;
+          font-weight: bold;
+          cursor: pointer;
+          box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+          transition: background 0.3s ease;
+        "
+      >
+        ⬇️ تحميل ملاحظات العملاء
+      </button>
+    </div>
     <!-- ✅ البحث -->
     <div id="searchBarContainer">
       <input
@@ -257,10 +275,9 @@
       <div>خدمة العملاء: 01212555345</div>
     </footer>
 
-    <!-- ✅ السكربت -->
-    <!-- ✅ السكربت النهائي -->
     <script type="module">
       import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+      import * as XLSX from "https://cdn.sheetjs.com/xlsx-0.20.0/package/xlsx.mjs";
 
       const supabase = createClient(
         "https://vyhtsdqccyvygelekzey.supabase.co",
@@ -271,7 +288,6 @@
       let notesData = [];
       let collectionsData = [];
 
-      // ==================== عند تحميل الصفحة ====================
       window.onload = async function () {
         const urlParams = new URLSearchParams(window.location.search);
         const agent_id = urlParams.get("agent_id");
@@ -283,13 +299,11 @@
         await loadAgentInfo(agent_id);
         await loadCustomers(agent_id);
 
-        // ✅ تشغيل loadStopRequests فقط لو الجدول موجود
         if (document.getElementById("stopRequestsTable")) {
           await loadStopRequests(agent_id);
         }
       };
 
-      // ==================== معلومات المندوب ====================
       async function loadAgentInfo(agent_id) {
         const { data, error } = await supabase
           .from("agents")
@@ -305,7 +319,6 @@
           "شيت العملاء: " + data.name;
       }
 
-      // ==================== العملاء ====================
       async function loadCustomers(agent_id) {
         try {
           const { data: customers, error: customerError } = await supabase
@@ -314,10 +327,12 @@
             .eq("agent_id", agent_id)
             .order("section", { ascending: true })
             .order("created_at", { ascending: true });
+
           const { data: notes, error: notesError } = await supabase
             .from("agent_notes")
             .select("customer_phone, note_text")
             .eq("agent_id", agent_id);
+
           const { data: collections, error: collectionsError } = await supabase
             .from("collections")
             .select("customer_id, collection_date")
@@ -338,7 +353,6 @@
         }
       }
 
-      // ==================== عرض العملاء ====================
       function displayCustomers(data, notes, collections) {
         const container = document.getElementById("customersSections");
         container.innerHTML = "";
@@ -361,16 +375,16 @@
 
             var table = document.createElement("table");
             table.innerHTML = `
-        <thead>
-            <tr>
-              <th>اسم العميل</th>
-              <th>رقم الهاتف</th>
-              <th>قيمة الفاتورة</th>
-              <th>حالة التحصيل</th>
-              <th>وقت آخر تحصيل</th>
-              <th>ملاحظة المندوب</th>
-            </tr>
-        </thead>`;
+      <thead>
+        <tr>
+          <th>اسم العميل</th>
+          <th>رقم الهاتف</th>
+          <th>قيمة الفاتورة</th>
+          <th>حالة التحصيل</th>
+          <th>وقت آخر تحصيل</th>
+          <th>ملاحظة المندوب</th>
+        </tr>
+      </thead>`;
             var tbody = document.createElement("tbody");
             table.appendChild(tbody);
             container.appendChild(table);
@@ -386,6 +400,7 @@
           const customerCollections = collections.filter(
             (c) => c.customer_id === customer.id
           );
+
           const latestCollectionDate = customerCollections.length
             ? new Date(
                 new Date(
@@ -395,7 +410,7 @@
                       : max
                   ).collection_date
                 ).getTime() +
-                  3 * 60 * 60 * 1000 // ✅ إضافة 3 ساعات
+                  3 * 60 * 60 * 1000
               ).toLocaleString("ar-EG", {
                 year: "numeric",
                 month: "2-digit",
@@ -426,7 +441,6 @@
         )} ج.م`;
       }
 
-      // ==================== البحث ====================
       document.getElementById("searchButton")?.addEventListener("click", () => {
         const query = document.getElementById("searchInput").value.trim();
         if (!query) {
@@ -443,7 +457,6 @@
         displayCustomers(filteredCustomers, notesData, collectionsData);
       });
 
-      // ==================== السهم للرجوع لأعلى ====================
       const scrollToTopBtn = document.getElementById("scrollToTopBtn");
       window.addEventListener("scroll", () => {
         scrollToTopBtn.style.display = window.scrollY > 300 ? "block" : "none";
@@ -452,15 +465,9 @@
         window.scrollTo({ top: 0, behavior: "smooth" });
       });
 
-      // ==================== الطلبات (إن وجدت على الصفحة) ====================
       async function loadStopRequests(agent_id) {
         const table = document.getElementById("stopRequestsTable");
-        if (!table) {
-          console.warn(
-            "⚠️ الجدول stopRequestsTable غير موجود على هذه الصفحة، يتم تخطي الدالة."
-          );
-          return; // ✅ إنهاء الدالة وعدم محاولة التعامل معها
-        }
+        if (!table) return;
 
         const { data, error } = await supabase
           .from("stop_requests")
@@ -481,7 +488,7 @@
 
         table.style.display = "table";
         const tbody = table.querySelector("tbody");
-        tbody.innerHTML = ""; // ✅ الآن مافيش خطأ لأن الجدول موجود
+        tbody.innerHTML = "";
 
         data.forEach((request) => {
           const row = document.createElement("tr");
@@ -492,8 +499,7 @@
       <td>${new Date(request.request_date).toLocaleString("ar-EG", {
         timeZone: "Africa/Cairo",
       })}</td>
-      <td><button class="stop-button">تم الوقف</button></td>
-    `;
+      <td><button class="stop-button">تم الوقف</button></td>`;
 
           const btn = row.querySelector(".stop-button");
           btn.addEventListener("click", async () => {
@@ -508,11 +514,11 @@
               row.remove();
             }
           });
+
           tbody.appendChild(row);
         });
       }
 
-      // ==================== نقل الطلب لجدول disconnected_lines ====================
       async function moveToDisconnectedLines(request) {
         try {
           const { error: insertError } = await supabase
@@ -527,7 +533,7 @@
             ]);
 
           if (insertError) {
-            alert("❌ حدث خطأ أثناء نقل الطلب إلى الجدول disconnected_lines");
+            alert("❌ خطأ أثناء النقل إلى disconnected_lines");
             console.error(insertError);
             return false;
           }
@@ -538,7 +544,7 @@
             .eq("id", request.id);
 
           if (deleteError) {
-            alert("❌ حدث خطأ أثناء حذف الطلب من الجدول الحالي");
+            alert("❌ خطأ أثناء الحذف من stop_requests");
             console.error(deleteError);
             return false;
           }
@@ -549,6 +555,71 @@
           return false;
         }
       }
+
+      // ✅ زر تحميل العملاء الذين لديهم ملاحظات فقط
+      document
+        .getElementById("downloadNotesBtn")
+        ?.addEventListener("click", () => {
+          if (!customersData.length) {
+            alert("⚠️ لم يتم تحميل بيانات العملاء بعد");
+            return;
+          }
+
+          const sheetData = customersData
+            .map((customer) => {
+              const note =
+                notesData.find((n) => n.customer_phone === customer.phone)
+                  ?.note_text || "";
+
+              if (!note.trim()) return null;
+
+              const customerCollections = collectionsData.filter(
+                (c) => c.customer_id === customer.id
+              );
+
+              const latestCollectionDate = customerCollections.length
+                ? new Date(
+                    new Date(
+                      customerCollections.reduce((max, c) =>
+                        new Date(c.collection_date) >
+                        new Date(max.collection_date)
+                          ? c
+                          : max
+                      ).collection_date
+                    ).getTime() +
+                      3 * 60 * 60 * 1000
+                  ).toLocaleString("ar-EG", {
+                    year: "numeric",
+                    month: "2-digit",
+                    day: "2-digit",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    second: "2-digit",
+                    hour12: false,
+                  })
+                : "-";
+
+              return {
+                "اسم العميل": customer.name,
+                "رقم الهاتف": customer.phone,
+                "قيمة الفاتورة": customer.due_amount,
+                "حالة التحصيل": customer.collection_status,
+                "وقت آخر تحصيل": latestCollectionDate,
+                "ملاحظة المندوب": note,
+              };
+            })
+            .filter((row) => row);
+
+          if (!sheetData.length) {
+            alert("❌ لا يوجد عملاء لديهم ملاحظات لعرضها");
+            return;
+          }
+
+          const worksheet = XLSX.utils.json_to_sheet(sheetData);
+          const workbook = XLSX.utils.book_new();
+          XLSX.utils.book_append_sheet(workbook, worksheet, "ملاحظات العملاء");
+          XLSX.writeFile(workbook, "ملاحظات_العملاء.xlsx");
+        });
     </script>
   </body>
 </html>
