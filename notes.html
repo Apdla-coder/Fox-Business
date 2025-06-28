@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <title>ملاحظات العملاء حسب المندوب</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+        padding-bottom: 80px;
+        background: linear-gradient(135deg, #2c3e50, #4ca1af);
+        color: #333;
+      }
+
+      h1 {
+        text-align: center;
+        color: #fff;
+        margin: 30px 0 20px;
+      }
+
+      #agentSelect {
+        padding: 10px;
+        font-size: 16px;
+        border-radius: 8px;
+        border: none;
+        margin: 0 auto 25px;
+        display: block;
+        max-width: 300px;
+        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        background: #fff;
+        border-radius: 12px;
+        overflow: hidden;
+        margin: 20px auto;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+      }
+
+      th,
+      td {
+        padding: 14px;
+        text-align: center;
+        border-bottom: 1px solid #eee;
+        font-size: 14px;
+      }
+
+      th {
+        background-color: #f8f9fa;
+        color: #333;
+        font-weight: bold;
+      }
+
+      @media (max-width: 768px) {
+        th,
+        td {
+          font-size: 13px;
+          padding: 10px;
+        }
+
+        #agentSelect {
+          font-size: 15px;
+        }
+      }
+
+      .no-notes {
+        color: white;
+        text-align: center;
+        font-size: 18px;
+        margin-top: 20px;
+      }
+
+      header {
+        background: linear-gradient(45deg, #2c3e50, #4ca1af);
+        padding: 15px 30px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        color: #fff;
+        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+        border-bottom-left-radius: 10px;
+        border-bottom-right-radius: 10px;
+      }
+
+      header a {
+        text-decoration: none;
+        color: white;
+      }
+
+      header h2 {
+        margin: 0;
+        font-size: 18px;
+      }
+
+      footer {
+        text-align: center;
+        padding: 15px;
+        color: #fff;
+        background: linear-gradient(45deg, #2c3e50, #4ca1af);
+        border-radius: 10px 10px 0 0;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div style="display: flex; align-items: center">
+        <a href="./index.html"
+          ><img
+            src="./Orange_logo.svg.png"
+            alt="Logo"
+            style="height: 50px; margin-left: 15px; border-radius: 8px"
+        /></a>
+        <h2>فوكس بيزنيس</h2>
+      </div>
+      <div style="font-size: 16px; display: flex; gap: 20px">
+        <a href="./management.html"><h2>رفع البيانات وإدارة المناديب ⬅</h2></a>
+        <a href="./agents_performance.html"><h2>أداء المناديب ⬅</h2></a>
+        <a href="./dashboard.html"><h2>لوحة التحكم ⬅</h2></a>
+      </div>
+    </header>
+
+    <h1>ملاحظات العملاء حسب المندوب</h1>
+    <select id="agentSelect">
+      <option value="">اختر المندوب</option>
+    </select>
+
+    <div id="notesContainer"></div>
+
+    <footer>
+      <p>© 2025 فوكس بيزنيس - جميع الحقوق محفوظة</p>
+    </footer>
+
+    <script type="module">
+      import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+      const supabase = createClient(
+        "https://vyhtsdqccyvygelekzey.supabase.co",
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5aHRzZHFjY3l2eWdlbGVremV5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk3NTQwOTMsImV4cCI6MjA2NTMzMDA5M30.bRjHD6OkziXjfavEX-tA-6IFdag7KoFBqLRgNLqwcdg"
+      );
+
+      const agentSelect = document.getElementById("agentSelect");
+      const notesContainer = document.getElementById("notesContainer");
+
+      loadAgents();
+
+      async function loadAgents() {
+        const { data, error } = await supabase
+          .from("agents")
+          .select("id, name");
+        if (error) return alert("⚠️ خطأ في تحميل المناديب");
+
+        data.forEach((agent) => {
+          const option = document.createElement("option");
+          option.value = agent.id;
+          option.textContent = agent.name;
+          agentSelect.appendChild(option);
+        });
+      }
+
+      agentSelect.addEventListener("change", async () => {
+        const agent_id = agentSelect.value;
+        notesContainer.innerHTML = "";
+
+        if (!agent_id) return;
+
+        const { data: customers } = await supabase
+          .from("customers")
+          .select("id, name, phone, due_amount, collection_status")
+          .eq("agent_id", agent_id);
+
+        const { data: notes } = await supabase
+          .from("agent_notes")
+          .select("customer_phone, note_text")
+          .eq("agent_id", agent_id);
+
+        const { data: collections } = await supabase
+          .from("collections")
+          .select("customer_id, collection_date")
+          .eq("collected_by", agent_id);
+
+        const filtered = customers
+          .map((cust) => {
+            const note =
+              notes.find((n) => n.customer_phone === cust.phone)?.note_text ||
+              "";
+            if (!note.trim()) return null;
+
+            const colls = collections.filter(
+              (col) => col.customer_id === cust.id
+            );
+            const latest = colls.length
+              ? new Date(
+                  new Date(
+                    colls.reduce((max, c) =>
+                      new Date(c.collection_date) >
+                      new Date(max.collection_date)
+                        ? c
+                        : max
+                    ).collection_date
+                  ).getTime() +
+                    3 * 60 * 60 * 1000
+                ).toLocaleString("ar-EG")
+              : "-";
+
+            return {
+              name: cust.name,
+              phone: cust.phone,
+              amount: cust.due_amount,
+              status: cust.collection_status,
+              date: latest,
+              note: note,
+            };
+          })
+          .filter((row) => row);
+
+        if (!filtered.length) {
+          notesContainer.innerHTML = `<div class="no-notes">لا توجد ملاحظات لهذا المندوب</div>`;
+          return;
+        }
+
+        const table = document.createElement("table");
+        table.innerHTML = `
+          <thead>
+            <tr>
+              <th>اسم العميل</th>
+              <th>رقم الهاتف</th>
+              <th>قيمة الفاتورة</th>
+              <th>حالة التحصيل</th>
+              <th>آخر تحصيل</th>
+              <th>الملاحظة</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${filtered
+              .map(
+                (row) => `
+              <tr>
+                <td>${row.name}</td>
+                <td>${row.phone}</td>
+                <td>${row.amount} ج.م</td>
+                <td>${row.status}</td>
+                <td>${row.date}</td>
+                <td>${row.note}</td>
+              </tr>`
+              )
+              .join("")}
+          </tbody>
+        `;
+        notesContainer.appendChild(table);
+      });
+    </script>
+  </body>
+</html>
