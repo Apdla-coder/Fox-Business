@@ -6,6 +6,7 @@
     <!-- مكتبة Supabase + XLSX -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <link rel="stylesheet" href="./header.css" />
     <style>
       /* =========== التنسيقات العامة =========== */
       body {
@@ -106,36 +107,27 @@
     </style>
   </head>
   <body>
-    <header
-      style="
-        background: linear-gradient(45deg, #2c3e50, #4ca1af);
-        padding: 15px 30px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        color: #fff;
-        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
-        border-bottom-left-radius: 10px;
-        border-bottom-right-radius: 10px;
-      "
-    >
-      <div style="display: flex; align-items: center">
-        <a href="./index.html"
-          ><img
-            src="./Orange_logo.svg.png"
-            alt="Logo"
-            style="height: 50px; margin-left: 15px; border-radius: 8px"
-        /></a>
+    <header>
+      <div class="logo-container">
+        <a href="./index.html">
+          <img src="./Orange_logo.svg.png" alt="Logo" />
+        </a>
         <h2 style="margin: 0">فوكس بيزنيس</h2>
       </div>
-      <div style="font-size: 16px; display: flex; gap: 20px">
-        <a href="./management.html"><h2>رفع البيانات وإدارة المناديب ⬅</h2></a>
-        <a href="./agents_performance.html"><h2>أداء المناديب ⬅</h2></a>
-        <a href="./dashboard.html"><h2>لوحة التحكم ⬅</h2></a>
-        <a href="./notes.html"><h2>ملاحظات المناديب ⬅</h2></a>
+
+      <!-- زر التوجال -->
+      <button class="toggle-btn" onclick="toggleMenu()">☰</button>
+
+      <!-- القائمة المنسدلة -->
+      <div id="navMenu" class="nav-menu">
+        <a href="./management.html">رفع البيانات وإدارة المناديب ⬅</a>
+        <a href="./agents_performance.html">أداء المناديب ⬅</a>
+        <a href="./dashboard.html">لوحة التحكم ⬅</a>
+        <a href="./disconnected_lines.html">الخطوط المتوقفة ⬅</a>
+        <a href="./notes.html">ملاحظات المناديب ⬅</a>
       </div>
     </header>
-
+    <script src="./header.js"></script>
     <h1>أداء المناديب اليوم</h1>
     <table>
       <thead>

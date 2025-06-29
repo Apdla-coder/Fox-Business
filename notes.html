@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <title>ملاحظات العملاء حسب المندوب</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="./header.css" />
     <style>
       body {
         font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
@@ -110,22 +111,26 @@
   </head>
   <body>
     <header>
-      <div style="display: flex; align-items: center">
-        <a href="./index.html"
-          ><img
-            src="./Orange_logo.svg.png"
-            alt="Logo"
-            style="height: 50px; margin-left: 15px; border-radius: 8px"
-        /></a>
-        <h2>فوكس بيزنيس</h2>
+      <div class="logo-container">
+        <a href="./index.html">
+          <img src="./Orange_logo.svg.png" alt="Logo" />
+        </a>
+        <h2 style="margin: 0">فوكس بيزنيس</h2>
       </div>
-      <div style="font-size: 16px; display: flex; gap: 20px">
-        <a href="./management.html"><h2>رفع البيانات وإدارة المناديب ⬅</h2></a>
-        <a href="./agents_performance.html"><h2>أداء المناديب ⬅</h2></a>
-        <a href="./dashboard.html"><h2>لوحة التحكم ⬅</h2></a>
+
+      <!-- زر التوجال -->
+      <button class="toggle-btn" onclick="toggleMenu()">☰</button>
+
+      <!-- القائمة المنسدلة -->
+      <div id="navMenu" class="nav-menu">
+        <a href="./management.html">رفع البيانات وإدارة المناديب ⬅</a>
+        <a href="./agents_performance.html">أداء المناديب ⬅</a>
+        <a href="./dashboard.html">لوحة التحكم ⬅</a>
+        <a href="./disconnected_lines.html">الخطوط المتوقفة ⬅</a>
+        <a href="./notes.html">ملاحظات المناديب ⬅</a>
       </div>
     </header>
-
+    <script src="./header.js"></script>
     <h1>ملاحظات العملاء حسب المندوب</h1>
     <select id="agentSelect">
       <option value="">اختر المندوب</option>
