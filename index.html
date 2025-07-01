@@ -3,46 +3,66 @@
   <head>
     <meta charset="UTF-8" />
     <title>تسجيل الدخول</title>
-    <link rel="manifest" href="manifest.json" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#2c3e50" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 
     <style>
+      * {
+        box-sizing: border-box;
+      }
+
       body {
         margin: 0;
         padding: 0;
         font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
         background: linear-gradient(135deg, #2c3e50, #4ca1af);
-        height: 100vh;
+        min-height: 100vh;
         display: flex;
         flex-direction: column;
-        justify-content: space-between;
+      }
+
+      header,
+      footer {
+        padding: 15px;
+        color: #fff;
+        background: #2c3e50;
+        text-align: center;
+      }
+
+      header {
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+      }
+
+      footer {
+        margin-top: auto;
+        border-top-left-radius: 10px;
+        border-top-right-radius: 10px;
+        font-size: 14px;
       }
 
       .login-container {
-        background: #ffffff;
-        padding: 30px 40px;
-        border-radius: 15px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-        width: 350px;
+        max-width: 400px;
+        margin: 40px auto;
+        background: #fff;
+        padding: 30px 25px;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
         text-align: center;
-        margin: 50px auto;
       }
 
       h1 {
-        margin-bottom: 25px;
+        margin-bottom: 20px;
         color: #333;
+        font-size: 24px;
       }
 
       input {
         width: 100%;
         padding: 12px;
-        margin-bottom: 20px;
+        margin-bottom: 15px;
         border: 1px solid #ccc;
-        border-radius: 8px;
-        font-size: 14px;
+        border-radius: 6px;
+        font-size: 15px;
       }
 
       button {
@@ -52,9 +72,9 @@
         color: white;
         font-size: 16px;
         border: none;
-        border-radius: 8px;
+        border-radius: 6px;
         cursor: pointer;
-        transition: background 0.3s ease;
+        transition: background 0.3s;
       }
 
       button:hover {
@@ -62,13 +82,37 @@
       }
 
       .alert {
-        background-color: #f8d7da;
-        color: #721c24;
+        display: none;
         padding: 10px;
         margin-bottom: 15px;
         border-radius: 5px;
         font-size: 14px;
-        display: none;
+      }
+
+      .alert.error {
+        background-color: #f8d7da;
+        color: #721c24;
+      }
+
+      .alert.success {
+        background-color: #d4edda;
+        color: #155724;
+      }
+
+      @media (max-width: 480px) {
+        .login-container {
+          margin: 20px;
+          padding: 20px;
+        }
+
+        h1 {
+          font-size: 20px;
+        }
+
+        input,
+        button {
+          font-size: 14px;
+        }
       }
     </style>
 
@@ -85,94 +129,116 @@
         const password = document.getElementById("password").value;
         const alertBox = document.getElementById("alertBox");
 
+        alertBox.style.display = "none";
+        alertBox.className = "alert";
+
         if (!email || !password) {
-          alertBox.innerText = "من فضلك أدخل البريد وكلمة المرور";
+          alertBox.textContent = "يرجى إدخال البريد الإلكتروني وكلمة المرور.";
+          alertBox.classList.add("error");
           alertBox.style.display = "block";
           return;
         }
 
-        try {
-          const { data, error } = await supabase
-            .from("agents")
-            .select("*")
-            .eq("email", email)
-            .eq("password", password)
-            .single();
+        const { data: authData, error: authError } =
+          await supabase.auth.signInWithPassword({ email, password });
 
-          if (error || !data) {
-            alertBox.innerText = "بيانات الدخول غير صحيحة";
-            alertBox.style.display = "block";
-            return;
-          }
-
-          localStorage.setItem("agent_id", data.id);
-          localStorage.setItem("role", data.role);
-
-          await supabase.from("login_logs").insert([{ agent_id: data.id }]);
-
-          setTimeout(() => {
-            if (data.role === "admin") {
-              window.location.href = "dashboard.html";
-            } else {
-              window.location.href = "collections.html";
-            }
-          }, 300);
-        } catch (err) {
-          alertBox.innerText = "حدث خطأ غير متوقع، حاول لاحقاً";
+        if (authError || !authData.user) {
+          alertBox.textContent = "بيانات الدخول غير صحيحة.";
+          alertBox.classList.add("error");
           alertBox.style.display = "block";
-          console.error(err);
+          return;
         }
+
+        const user = authData.user;
+
+        // محاولة استرجاع بيانات المندوب من جدول agents
+        const { data: agentData, error: agentError } = await supabase
+          .from("agents")
+          .select("*")
+          .eq("auth_user_id", user.id)
+          .maybeSingle(); // أفضل من single لتجنب الخطأ لو مفيش نتيجة
+
+        if (agentError) {
+          console.error("Agent error:", agentError);
+        }
+
+        if (!agentData) {
+          alertBox.textContent =
+            "تم تسجيل الدخول، لكن لا يوجد حساب مرتبط بهذا المستخدم في جدول المندوبين.";
+          alertBox.classList.add("error");
+          alertBox.style.display = "block";
+          return;
+        }
+
+        // حفظ بيانات المندوب في localStorage
+        localStorage.setItem("agent_id", agentData.id);
+        localStorage.setItem("auth_user_id", user.id);
+        localStorage.setItem("role", agentData.role);
+
+        // تحديث آخر تسجيل دخول
+        await supabase
+          .from("agents")
+          .update({ last_login: new Date().toISOString() })
+          .eq("id", agentData.id);
+
+        // تسجيل دخول في جدول login_logs
+        await supabase.from("login_logs").insert([{ agent_id: agentData.id }]);
+
+        alertBox.textContent = "تم تسجيل الدخول بنجاح. يتم التوجيه...";
+        alertBox.classList.add("success");
+        alertBox.style.display = "block";
+
+        setTimeout(() => {
+          if (agentData.role === "admin") {
+            window.location.href = "dashboard.html";
+          } else {
+            window.location.href = "collections.html";
+          }
+        }, 1500);
       };
     </script>
   </head>
+
   <body>
-    <!-- ✅ الهيدر -->
-    <header
-      style="
-        background: linear-gradient(45deg, #2c3e50, #4ca1af);
-        padding: 15px 30px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        color: #fff;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-        border-bottom-left-radius: 10px;
-        border-bottom-right-radius: 10px;
-      "
-    >
-      <div style="display: flex; align-items: center">
+    <header>
+      <div
+        style="
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+        "
+      >
         <img
           src="./Orange_logo.svg.png"
           alt="Logo"
-          style="height: 50px; margin-left: 15px; border-radius: 8px"
+          style="height: 40px; border-radius: 6px"
         />
         <h2 style="margin: 0">فوكس بيزنيس</h2>
       </div>
-      <div style="font-size: 16px">نظام إدارة التحصيل</div>
+      <div>نظام إدارة التحصيل</div>
     </header>
 
-    <!-- ✅ فورم تسجيل الدخول -->
     <div class="login-container">
       <h1>تسجيل الدخول</h1>
-      <div class="alert" id="alertBox"></div>
-      <input type="email" id="email" placeholder="البريد الإلكتروني" />
-      <input type="password" id="password" placeholder="كلمة المرور" />
+      <div id="alertBox" class="alert"></div>
+      <input
+        type="email"
+        id="email"
+        placeholder="البريد الإلكتروني"
+        autocomplete="username"
+      />
+      <input
+        type="password"
+        id="password"
+        placeholder="كلمة المرور"
+        autocomplete="current-password"
+      />
       <button onclick="login()">دخول</button>
+      <a href="./forget-pass.html">نسيت كلمة المرور؟</a>
     </div>
 
-    <!-- ✅ الفوتر -->
-    <footer
-      style="
-        background: #2c3e50;
-        color: #fff;
-        text-align: center;
-        padding: 15px;
-        font-size: 14px;
-        border-top-left-radius: 10px;
-        border-top-right-radius: 10px;
-        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.15);
-      "
-    >
+    <footer>
       <div>جميع الحقوق محفوظة &copy; فوكس بيزنيس</div>
       <div>مطور النظام: عبدالله هاني</div>
       <div>خدمة العملاء: 01212555345</div>

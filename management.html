@@ -176,11 +176,12 @@
 
       <!-- القائمة المنسدلة -->
       <div id="navMenu" class="nav-menu">
-        <a href="./management.html">رفع البيانات وإدارة المناديب ⬅</a>
+        <a href="./management.html"> تعديل بيانات العملاء ⬅</a>
         <a href="./agents_performance.html">أداء المناديب ⬅</a>
         <a href="./dashboard.html">لوحة التحكم ⬅</a>
         <a href="./disconnected_lines.html">الخطوط المتوقفة ⬅</a>
         <a href="./notes.html">ملاحظات المناديب ⬅</a>
+        <a href="./admin.html"> ادارة المناديب ⬅</a>
       </div>
     </header>
     <script src="./header.js"></script>
@@ -230,20 +231,6 @@
     <h2>حذف كل البيانات</h2>
     <button id="clearButton">🧨 حذف جميع البيانات</button>
     <div id="clearStatus"></div>
-
-    <!-- =========== فورم إضافة مندوب =========== -->
-    <div id="addAgentContainer">
-      <h3>➕ إضافة مندوب</h3>
-      <div id="addAgentAlert"></div>
-      <input id="newAgentName" placeholder="اسم المندوب" />
-      <input id="newAgentEmail" placeholder="البريد الإلكتروني" />
-      <input id="newAgentPassword" placeholder="كلمة المرور" />
-      <select id="newAgentRole">
-        <option value="agent">مندوب</option>
-        <option value="admin">أدمن</option>
-      </select>
-      <button id="addAgentButton">➕ إضافة مندوب</button>
-    </div>
 
     <!-- =========== الفوتر =========== -->
     <footer
@@ -511,43 +498,6 @@
             }
           }
         });
-
-      document
-        .getElementById("addAgentButton")
-        ?.addEventListener("click", async () => {
-          const name = document.getElementById("newAgentName").value.trim();
-          const email = document.getElementById("newAgentEmail").value.trim();
-          const password = document
-            .getElementById("newAgentPassword")
-            .value.trim();
-          const role = document.getElementById("newAgentRole").value;
-          const alertBox = document.getElementById("addAgentAlert");
-
-          if (!name || !email || !password) {
-            alertBox.textContent = "❌ يرجى ملء جميع الحقول";
-            alertBox.style.backgroundColor = "crimson";
-            alertBox.style.display = "block";
-            return;
-          }
-
-          const { error } = await supabase
-            .from("agents")
-            .insert([{ name, email, password, role }]);
-          if (error) {
-            alertBox.textContent = "❌ فشل في الإضافة";
-            alertBox.style.backgroundColor = "crimson";
-          } else {
-            alertBox.textContent = "✅ تم إضافة المندوب";
-            alertBox.style.backgroundColor = "green";
-            document.getElementById("newAgentName").value = "";
-            document.getElementById("newAgentEmail").value = "";
-            document.getElementById("newAgentPassword").value = "";
-            await loadAgentsForAdmin();
-          }
-
-          alertBox.style.display = "block";
-        });
-
       document
         .getElementById("clearButton")
         ?.addEventListener("click", async () => {
