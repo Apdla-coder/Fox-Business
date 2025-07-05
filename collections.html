@@ -4,9 +4,7 @@
     <meta charset="UTF-8" />
     <title>تحصيل العملاء</title>
     <style>
-      /* =========================
-       ⚡️ الأساسات العامة
-       ========================= */
+      /* ⚡️ الأساسات العامة */
       body {
         margin: 0;
         font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
@@ -17,15 +15,15 @@
         flex-direction: column;
         align-items: center;
       }
+
       h1,
       h3 {
         text-align: center;
         color: #fff;
         font-weight: bold;
       }
-      /* =========================
-       ⚡️ عنصر الرسالة الجانبية
-       ========================= */
+
+      /* ⚡️ عنصر الرسالة الجانبية */
       #sideMotivationalBox {
         position: fixed;
         top: 100px;
@@ -36,43 +34,54 @@
         border-radius: 8px;
         font-size: 14px;
         font-weight: bold;
-        max-width: 180px;
+        max-width: 200px;
         box-shadow: 0px 3px 12px rgba(0, 0, 0, 0.2);
         z-index: 1000;
       }
-      /* =========================
-       ⚡️ الجدول
-       ========================= */
+
+      /* ⚡️ الحاوية العامة للجداول */
       .table-container {
         background: #ffffff;
         padding: 25px;
         border-radius: 15px;
         box-shadow: 0 12px 35px rgba(0, 0, 0, 0.25);
         width: 90%;
-        max-width: 1000px;
+        max-width: 1100px;
         overflow-x: auto;
         margin: 20px 0;
       }
+
+      /* ⚡️ الجداول */
       table {
         width: 100%;
         border-collapse: collapse;
         font-size: 15px;
         direction: rtl;
+        margin-top: 10px;
       }
+
       th,
       td {
         padding: 15px 10px;
         text-align: center;
         border-bottom: 1px solid #ddd;
       }
+
       th {
         background-color: #f7f7f7;
         font-weight: bold;
         color: #333;
       }
-      /* =========================
-       ⚡️ الأزرار
-       ========================= */
+
+      tr.section-row td {
+        background: #e8f5e9;
+        font-weight: bold;
+        text-align: right;
+        padding: 12px;
+        font-size: 15px;
+      }
+
+      /* ⚡️ الأزرار */
       button {
         padding: 10px 16px;
         background: #27ae60;
@@ -83,68 +92,35 @@
         cursor: pointer;
         transition: 0.3s ease;
       }
+
       button:hover {
         background: #1e8449;
       }
-      /* =========================
-       ⚡️ لودينج
-       ========================= */
-      .loading-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        display: none;
-        align-items: center;
-        justify-content: center;
-        z-index: 9999;
-        background: rgba(0, 0, 0, 0.3);
+
+      button.red {
+        background: #e74c3c;
       }
-      .spinner {
-        border: 6px solid #f3f3f3;
-        border-top: 6px solid #27ae60;
-        border-radius: 50%;
-        width: 55px;
-        height: 55px;
-        animation: spin 1s linear infinite;
+
+      button.red:hover {
+        background: #c0392b;
       }
-      @keyframes spin {
-        100% {
-          transform: rotate(360deg);
-        }
+
+      button.gray {
+        background: #bdc3c7;
+        cursor: not-allowed;
       }
-      /* =========================
-       ⚡️ رأس الصفحة
-       ========================= */
-      header {
-        background: linear-gradient(45deg, #2c3e50, #4ca1af);
-        padding: 15px 30px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        color: #fff;
-        box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.25);
-        border-bottom-left-radius: 12px;
-        border-bottom-right-radius: 12px;
+
+      /* ⚡️ الملاحظات */
+      textarea {
+        width: 100%;
+        min-width: 150px;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+        padding: 8px;
+        font-size: 13px;
       }
-      header h2 {
-        margin: 0;
-        font-size: 22px;
-        font-weight: bold;
-      }
-      header .logo {
-        display: flex;
-        align-items: center;
-        gap: 15px;
-      }
-      header .logo img {
-        height: 50px;
-        border-radius: 8px;
-      }
-      /* =========================
-       ⚡️ الرسالة الجماعية
-       ========================= */
+
+      /* ⚡️ الرسالة الجماعية */
       #bulkSMSContainer {
         padding: 20px;
         background: #f9f9f9;
@@ -154,6 +130,7 @@
         text-align: right;
         box-shadow: 0px 4px 18px rgba(0, 0, 0, 0.1);
       }
+
       #bulkMessageText {
         width: 100%;
         height: 100px;
@@ -162,6 +139,7 @@
         border: 1px solid #ccc;
         font-size: 14px;
       }
+
       #sendBulkSMS {
         padding: 12px 20px;
         font-size: 14px;
@@ -172,12 +150,12 @@
         cursor: pointer;
         font-weight: bold;
       }
+
       #sendBulkSMS:hover {
         background: #297fb8;
       }
-      /* =========================
-       ⚡️ شريط البحث
-       ========================= */
+
+      /* ⚡️ شريط البحث */
       #searchBarContainer {
         position: sticky;
         top: 0;
@@ -190,6 +168,7 @@
         gap: 12px;
         box-shadow: 0px 3px 12px rgba(0, 0, 0, 0.1);
       }
+
       #searchInput {
         padding: 12px;
         flex: 1;
@@ -198,6 +177,7 @@
         border: 1px solid #ccc;
         font-size: 14px;
       }
+
       #searchButton {
         padding: 12px 20px;
         font-size: 14px;
@@ -208,8 +188,92 @@
         border: none;
         cursor: pointer;
       }
+
       #searchButton:hover {
         background: #1e8449;
+      }
+
+      /* ⚡️ رأس الصفحة */
+      header {
+        background: linear-gradient(45deg, #2c3e50, #4ca1af);
+        padding: 15px 30px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        color: #fff;
+        box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.25);
+        border-bottom-left-radius: 12px;
+        border-bottom-right-radius: 12px;
+      }
+
+      header h2 {
+        margin: 0;
+        font-size: 22px;
+        font-weight: bold;
+      }
+
+      header .logo {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+      }
+
+      header .logo img {
+        height: 50px;
+        border-radius: 8px;
+      }
+
+      /* ⚡️ لودينج */
+      .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        background: rgba(0, 0, 0, 0.3);
+      }
+
+      .spinner {
+        border: 6px solid #f3f3f3;
+        border-top: 6px solid #27ae60;
+        border-radius: 50%;
+        width: 55px;
+        height: 55px;
+        animation: spin 1s linear infinite;
+      }
+      .accordion {
+        width: 90%;
+        max-width: 1100px;
+        margin: 20px auto;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      }
+      .accordion-header {
+        width: 100%;
+        padding: 15px 20px;
+        text-align: right;
+        background: #34495e;
+        color: white;
+        font-size: 16px;
+        font-weight: bold;
+        border: none;
+        cursor: pointer;
+      }
+      .accordion-body {
+        background: #fff;
+        padding: 10px 15px;
+        border-top: 1px solid #ccc;
+      }
+
+      @keyframes spin {
+        100% {
+          transform: rotate(360deg);
+        }
       }
     </style>
   </head>
@@ -226,10 +290,15 @@
 
     <h1>العملاء المطلوب تحصيلهم</h1>
     <div id="sideMotivationalBox"></div>
+
+    <!-- رسائل المدير -->
     <div id="agentMessages" style="margin: 20px 0"></div>
+
+    <!-- ملخص المبالغ -->
     <h3 id="totalDue">المبلغ المتبقي: ...</h3>
     <h3 id="collectedAmount">المبلغ المحصل: 0.00 ج.م</h3>
 
+    <!-- شريط البحث -->
     <div id="searchBarContainer">
       <input
         type="text"
@@ -238,28 +307,26 @@
       />
       <button id="searchButton">🔍 بحث</button>
     </div>
+    <hr style="width: 80%; margin: 40px auto; border: 1px dashed #ccc" />
 
-    <!-- زر السهم للرجوع لأعلى -->
-    <button
-      id="scrollToTopBtn"
-      style="
-        position: fixed;
-        bottom: 30px;
-        left: 30px;
-        font-size: 24px;
-        padding: 12px 15px;
-        border-radius: 50%;
-        border: none;
-        background-color: #3498db;
-        color: #fff;
-        cursor: pointer;
-        display: none;
-        z-index: 1001;
-      "
-    >
-      ⬆️
-    </button>
+    <!-- ✅ شريط طلبات وقف الخدمة -->
+    <div class="accordion">
+      <button
+        class="accordion-header"
+        onclick="toggleAccordion('stoppedSection')"
+      >
+        🚫 طلبات وقف الخدمة
+      </button>
+      <div class="accordion-body" id="stoppedSection" style="display: none">
+        <table
+          id="stoppedCustomersTable"
+          border="1"
+          style="width: 100%; margin-top: 10px"
+        ></table>
+      </div>
+    </div>
 
+    <!-- جدول العملاء للتحصيل -->
     <div class="table-container">
       <table>
         <thead>
@@ -275,6 +342,63 @@
         <tbody id="customersTable"></tbody>
       </table>
     </div>
+    <!-- ✅ شريط العملاء المحصلين -->
+    <div class="accordion">
+      <button
+        class="accordion-header"
+        onclick="toggleAccordion('collectedSection')"
+      >
+        ✅ العملاء المحصلين
+      </button>
+      <div class="accordion-body" id="collectedSection" style="display: none">
+        <div class="table-container" style="margin-top: 10px">
+          <table>
+            <thead>
+              <tr>
+                <th>الاسم</th>
+                <th>الموبايل</th>
+                <th>العنوان</th>
+                <th>المبلغ المدفوع</th>
+                <th>التراجع</th>
+                <th>الملاحظات</th>
+              </tr>
+            </thead>
+            <tbody id="collectedTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- فاصل بسيط -->
+
+    <!-- زر الرجوع لأعلى -->
+    <button
+      id="scrollToTopBtn"
+      style="
+        position: fixed;
+        bottom: 30px;
+        left: 30px;
+        font-size: 22px;
+        padding: 12px 14px;
+        border-radius: 50%;
+        border: none;
+        background-color: #3498db;
+        color: #fff;
+        cursor: pointer;
+        display: none;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        z-index: 1001;
+      "
+    >
+      ⬆️
+    </button>
+    <script>
+      const scrollBtn = document.getElementById("scrollToTopBtn");
+      window.onscroll = () => {
+        scrollBtn.style.display = window.scrollY > 300 ? "block" : "none";
+      };
+      scrollBtn.onclick = () => window.scrollTo({ top: 0, behavior: "smooth" });
+    </script>
 
     <footer
       style="
@@ -296,7 +420,6 @@
       <div class="spinner"></div>
     </div>
 
-    <!-- ⚡️ السكربت النهائي ⚡️ -->
     <script type="module">
       import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
@@ -307,490 +430,334 @@
 
       let customersData = [];
 
-      // ⚡️ تحصيل فاتورة
-      window.collect = async function (customer_id, due_amount) {
+      // ✅ عند تحميل الصفحة
+      window.onload = async () => {
         const agent_id = localStorage.getItem("agent_id");
-        if (!agent_id) {
-          alert("❌ليس لديك صلاحية");
-          return;
-        }
-        if (
-          !confirm(`✅ هل أنت متأكد من تحصيل ${due_amount} ج.م من هذا العميل؟`)
-        )
-          return;
+        if (!agent_id) return alert("❌ليس لديك صلاحية");
 
-        try {
-          const { error: updateError } = await supabase
-            .from("customers")
-            .update({
-              collection_status: "تم التحصيل",
-            })
-            .eq("id", customer_id);
-
-          if (updateError) {
-            alert("❌ حدث خطأ أثناء تحديث الحالة");
-            console.error(updateError);
-            return;
-          }
-
-          const { error: insertError } = await supabase
-            .from("collections")
-            .insert([
-              { collected_by: agent_id, customer_id, amount: due_amount },
-            ]);
-
-          if (insertError) {
-            alert("❌ حدث خطأ أثناء تسجيل التحصيل");
-            console.error(insertError);
-            return;
-          }
-
-          alert("✅ تم تحصيل الفاتورة بنجاح");
-          await loadCustomers(agent_id);
-          await loadAmounts(agent_id);
-        } catch (error) {
-          console.error(error);
-          alert("❌ حدث خطأ غير متوقع أثناء التحصيل");
-        }
+        await updateLastLoginWithLocation(agent_id);
+        await loadCustomers(agent_id);
+        await loadStoppedCustomers(agent_id);
+        showRandomMotivationalMessage();
       };
 
-      // ⚡️ حفظ ملاحظة
-      window.saveNote = async function (
-        customer_id,
-        customer_name,
-        customer_phone
-      ) {
-        const agent_id = localStorage.getItem("agent_id");
-        const noteField = document.getElementById(`note_${customer_id}`);
-        const note_text = noteField.value.trim();
-
-        if (!note_text) {
-          alert("⚠️ اكتب ملاحظة أولًا");
-          return;
-        }
-
-        const { error } = await supabase
-          .from("agent_notes")
-          .upsert([{ agent_id, customer_phone, customer_name, note_text }], {
-            onConflict: ["agent_id", "customer_phone"],
-          });
-        if (error) {
-          alert("❌ حدث خطأ أثناء حفظ الملاحظة");
-          console.error(error);
-        } else {
-          alert("✅ تم حفظ الملاحظة بنجاح");
-          // ✅ ملاحظة تظل موجودة ولا يتم مسحها
-          // تحديث نسخة الملاحظة المحفوظة محليًا كذلك
-          const existingNote = notesData.find(
-            (n) => n.customer_phone === customer_phone
-          );
-          if (existingNote) {
-            existingNote.note_text = note_text;
-          } else {
-            notesData.push({ customer_phone, note_text });
-          }
-        }
-      };
-      // ⚡️ تحميل العملاء
+      // ✅ تحميل بيانات العملاء
       async function loadCustomers(agent_id) {
         const table = document.getElementById("customersTable");
         const loading = document.getElementById("loadingOverlay");
-        loading.style.display = "flex";
+        if (loading) loading.style.display = "flex";
 
         const { data, error } = await supabase
           .from("customers")
           .select("*")
           .eq("agent_id", agent_id)
-          .order("section", { ascending: true })
-          .order("created_at", { ascending: true });
+          .order("section", { ascending: true });
+
+        if (loading) loading.style.display = "none";
+
         if (error) {
+          console.error("❌ خطأ تحميل العملاء:", error);
           alert("⚠️ حدث خطأ أثناء تحميل العملاء");
-          console.error(error);
-          loading.style.display = "none";
           return;
         }
 
-        if (data.length && !data[0]?.created_at) {
-          data.sort((a, b) => a.id - b.id);
-        }
-
         customersData = data;
-
         displayCustomers(data);
         await loadAmounts(agent_id);
-        loading.style.display = "none";
       }
 
-      // ⚡️ رابط واتساب
-      function getWhatsAppLink(phone) {
-        let formatted = phone.replace(/\D/g, "");
-        if (formatted.length === 10) formatted = "0" + formatted;
-        if (formatted.startsWith("0")) {
-          formatted = "20" + formatted.slice(1);
-        } else if (!formatted.startsWith("20")) {
-          formatted = "20" + formatted;
-        }
-        return `https://wa.me/${formatted}`;
-      }
-
-      // ⚡️ عرض العملاء
+      // ✅ عرض العملاء
       function displayCustomers(data) {
         const table = document.getElementById("customersTable");
         table.innerHTML = "";
         let totalDue = 0;
+        let lastSection = null;
 
-        const pendingCustomers = data.filter(
+        const pending = data.filter(
           (c) => c.collection_status !== "تم التحصيل"
         );
-        const collectedCustomers = data.filter(
+        const collected = data.filter(
           (c) => c.collection_status === "تم التحصيل"
         );
 
-        let lastSection = null;
-
-        pendingCustomers.forEach((customer) => {
-          totalDue += customer.due_amount || 0;
-
-          if (customer.section !== lastSection) {
-            const sectionRow = document.createElement("tr");
-            sectionRow.innerHTML = `
-            <td colspan="7" style="background:#eee; font-weight:bold;text-align:right;padding:10px;">
-              📌 القسم: ${customer.section || "غير محدد"}
-            </td>`;
-            table.appendChild(sectionRow);
-            lastSection = customer.section;
+        pending.forEach((c) => {
+          totalDue += c.due_amount || 0;
+          if (c.section !== lastSection) {
+            table.innerHTML += `
+          <tr><td colspan="7" style="background:#eee;font-weight:bold;text-align:right;padding:10px;">
+            📌 القسم: ${c.section || "غير محدد"}
+          </td></tr>`;
+            lastSection = c.section;
           }
 
-          const phoneLink = getWhatsAppLink(customer.phone);
-          const row = document.createElement("tr");
-          row.id = `row_${customer.id}`;
+          const phoneLink = getWhatsAppLink(c.phone);
 
-          row.innerHTML = `
-        <td>${customer.name}</td>
-        <td>${customer.phone}
-            <a href="${phoneLink}" target="_blank" title="التحدث على واتساب">whatsapp📞</a>
-        </td>
-        <td>${customer.address || ""}</td>
-        <td>${customer.due_amount} ج.م</td>
-<td>
-  <button id="btn_${customer.id}" onClick="collect('${customer.id}', ${
-            customer.due_amount
-          })">تحصيل</button>
-  <button id="stopBtn_${
-    customer.id
-  }" style="background:#e74c3c;color:#fff;" onClick="requestStopService('${
-            customer.id
-          }','${customer.name}','${customer.phone}')">وقف الخدمة</button>
-</td>
+          table.innerHTML += `
+        <tr id="row_${c.id}">
+          <td>${c.name}</td>
+          <td>${c.phone}<a href="${phoneLink}" target="_blank">📞</a></td>
+          <td>${c.address || ""}</td>
+          <td>${c.due_amount} ج.م</td>
+          <td>
+            <button onclick="collect('${c.id}', ${c.due_amount})">تحصيل</button>
+            <button style="background:#e74c3c;color:#fff;" onclick="requestStopService('${
+              c.id
+            }','${c.name}','${c.phone}')">وقف الخدمة</button>
+          </td>
+          <td>
             <textarea id="note_${
-              customer.id
+              c.id
             }" placeholder="اكتب الملاحظة هنا..." style="width:150px;height:40px;"></textarea><br/>
-            <button onClick="saveNote('${customer.id}','${customer.name}','${
-            customer.phone
+            <button onclick="saveNote('${c.id}','${c.name}','${
+            c.phone
           }')">💬 حفظ</button>
-        </td>`;
-          table.appendChild(row);
+          </td>
+        </tr>`;
         });
 
-        if (collectedCustomers.length > 0) {
-          const collectedHeader = document.createElement("tr");
-          collectedHeader.innerHTML = `
-        <td colspan="7" style="background:#d4edda; font-weight:bold;text-align:right;padding:10px;">
-            ✅ تم التحصيل
-        </td>`;
-          table.appendChild(collectedHeader);
+        // ✅ العملاء المحصلين
+        const collectedTable = document.getElementById("collectedTableBody");
+        collectedTable.innerHTML = "";
+        let lastCollectedSection = null;
 
-          collectedCustomers.forEach((customer) => {
-            const phoneLink = getWhatsAppLink(customer.phone);
-            const row = document.createElement("tr");
-            row.id = `row_${customer.id}`;
-            row.style.opacity = "0.5";
+        collected.forEach((c) => {
+          if (c.section !== lastCollectedSection) {
+            collectedTable.innerHTML += `<tr class="section-row"><td colspan="6">📌 القسم: ${
+              c.section || "غير محدد"
+            }</td></tr>`;
+            lastCollectedSection = c.section;
+          }
 
-            row.innerHTML = `
-            <td>${customer.name}</td>
-            <td>${customer.phone}
-                <a href="${phoneLink}" target="_blank" title="التحدث على واتساب">📞</a>
-            </td>
-            <td>${customer.address || ""}</td>
-            <td>${customer.due_amount} ج.م</td>
-            <td><button id="btn_${customer.id}" disabled>تم</button></td>
-            <td>
-                <textarea id="note_${
-                  customer.id
-                }" placeholder="اكتب الملاحظة هنا..." style="width:150px;height:40px;"></textarea><br/>
-                <button onClick="saveNote('${customer.id}','${
-              customer.name
-            }','${customer.phone}')">💬 حفظ</button>
-            </td>`;
-            table.appendChild(row);
-          });
-        }
+          const phoneLink = getWhatsAppLink(c.phone);
+          collectedTable.innerHTML += `
+        <tr style="opacity: 0.7">
+          <td>${c.name}</td>
+          <td>${c.phone}<a href="${phoneLink}" target="_blank">📞</a></td>
+          <td>${c.address || ""}</td>
+          <td>${c.due_amount} ج.م</td>
+          <td>
+            <button style="background:#e67e22;" onclick="undoCollect('${
+              c.id
+            }', ${c.due_amount})">↩️ تراجع</button>
+          </td>
+          <td>
+            <textarea id="note_${
+              c.id
+            }" placeholder="اكتب الملاحظة هنا..."></textarea><br/>
+            <button onclick="saveNote('${c.id}','${c.name}','${
+            c.phone
+          }')">💬 حفظ</button>
+          </td>
+        </tr>`;
+        });
 
         document.getElementById(
           "totalDue"
         ).innerText = `المبلغ المتبقي: ${totalDue.toFixed(2)} ج.م`;
       }
 
-      // ⚡️ تحميل مبالغ المحصل
-      async function loadAmounts(agent_id) {
-        const [{ data: collections }, { data: messages }] = await Promise.all([
-          supabase
-            .from("collections")
-            .select("amount")
-            .eq("collected_by", agent_id),
-          supabase
-            .from("messages")
-            .select("*")
-            .eq("agent_id", agent_id)
-            .order("created_at", { ascending: false }),
-        ]);
+      // ✅ تحصيل العميل
+      window.collect = async (id, amount) => {
+        const agent_id = localStorage.getItem("agent_id");
+        if (!agent_id) return alert("❌ليس لديك صلاحية");
 
-        const collectedAmount = collections.reduce(
-          (sum, c) => sum + (c.amount || 0),
-          0
+        if (!confirm(`✅ تأكيد تحصيل ${amount} ج.م؟`)) return;
+
+        await supabase
+          .from("customers")
+          .update({ collection_status: "تم التحصيل" })
+          .eq("id", id);
+        await supabase
+          .from("collections")
+          .insert([{ collected_by: agent_id, customer_id: id, amount }]);
+
+        alert("✅ تم التحصيل");
+        await loadCustomers(agent_id);
+        await loadAmounts(agent_id);
+      };
+
+      // ✅ التراجع عن التحصيل
+      window.undoCollect = async (customer_id, amount) => {
+        const agent_id = localStorage.getItem("agent_id");
+        if (!agent_id) return alert("❌ليس لديك صلاحية");
+
+        if (!confirm("⚠️ هل أنت متأكد من التراجع عن التحصيل؟")) return;
+
+        await supabase
+          .from("collections")
+          .delete()
+          .eq("customer_id", customer_id)
+          .eq("collected_by", agent_id);
+        await supabase
+          .from("customers")
+          .update({ collection_status: null })
+          .eq("id", customer_id);
+
+        alert("✅ تم التراجع عن التحصيل");
+        await loadCustomers(agent_id);
+        await loadAmounts(agent_id);
+      };
+
+      // ✅ حفظ الملاحظة
+      window.saveNote = async (id, name, phone) => {
+        const agent_id = localStorage.getItem("agent_id");
+        const note = document.getElementById(`note_${id}`).value.trim();
+        if (!note) return alert("⚠️ اكتب ملاحظة أولًا");
+
+        await supabase.from("agent_notes").upsert(
+          [
+            {
+              agent_id,
+              customer_name: name,
+              customer_phone: phone,
+              note_text: note,
+            },
+          ],
+          { onConflict: ["agent_id", "customer_phone"] }
         );
-        document.getElementById(
-          "collectedAmount"
-        ).innerText = `المبلغ المحصل: ${collectedAmount.toFixed(2)} ج.م`;
+
+        alert("✅ تم حفظ الملاحظة");
+      };
+
+      // ✅ رابط واتساب
+      function getWhatsAppLink(phone) {
+        let p = phone.replace(/\D/g, "");
+        if (p.length === 10) p = "0" + p;
+        if (p.startsWith("0")) p = "20" + p.slice(1);
+        else if (!p.startsWith("20")) p = "20" + p;
+        return `https://wa.me/${p}`;
       }
 
-      // ⚡️ تحميل الرسائل
-      async function loadAgentMessages(agent_id) {
-        const { data: messages, error } = await supabase
-          .from("messages")
+      // ✅ تحميل المبلغ المحصل
+      async function loadAmounts(agent_id) {
+        const { data } = await supabase
+          .from("collections")
+          .select("amount")
+          .eq("collected_by", agent_id);
+        const total = (data || []).reduce((sum, r) => sum + (r.amount || 0), 0);
+        document.getElementById(
+          "collectedAmount"
+        ).innerText = `المبلغ المحصل: ${total.toFixed(2)} ج.م`;
+      }
+
+      // ✅ وقف الخدمة
+      window.requestStopService = async (id, name, phone) => {
+        const agent_id = localStorage.getItem("agent_id");
+        if (!agent_id || !confirm(`❗ هل تريد وقف الخدمة للعميل ${name}?`))
+          return;
+
+        const { data: existing } = await supabase
+          .from("stop_requests")
+          .select("id")
+          .eq("agent_id", agent_id)
+          .eq("customer_id", id);
+
+        if (existing.length > 0)
+          return alert("⚠️ تم تقديم طلب بالفعل لهذا العميل");
+
+        await supabase.from("stop_requests").insert([
+          {
+            agent_id,
+            customer_id: id,
+            customer_name: name,
+            customer_phone: phone,
+          },
+        ]);
+        alert(`✅ تم وقف الخدمة عن ${name}`);
+
+        const row = document.getElementById(`row_${id}`);
+        if (row) row.style.backgroundColor = "#ffaaaa";
+
+        await loadStoppedCustomers(agent_id);
+      };
+
+      // ✅ إلغاء الوقف
+      window.cancelStopRequest = async (stop_id, name) => {
+        if (!confirm(`هل تريد إلغاء وقف الخدمة عن ${name}?`)) return;
+
+        await supabase.from("stop_requests").delete().eq("id", stop_id);
+        alert(`✅ تم إلغاء الوقف عن ${name}`);
+
+        const agent_id = localStorage.getItem("agent_id");
+        await loadStoppedCustomers(agent_id);
+        await loadCustomers(agent_id);
+      };
+
+      // ✅ تحميل العملاء الموقوفين
+      async function loadStoppedCustomers(agent_id) {
+        const table = document.getElementById("stoppedCustomersTable");
+
+        const { data, error } = await supabase
+          .from("stop_requests")
           .select("*")
           .eq("agent_id", agent_id)
           .order("created_at", { ascending: false });
-        const container = document.getElementById("agentMessages");
-        container.innerHTML = "";
 
-        if (error) {
-          console.error(error);
-          container.innerHTML = "<p>❌ حدث خطأ أثناء جلب الرسائل</p>";
-          return;
-        }
-        if (!messages || messages.length === 0) {
-          container.innerHTML = "<p>📭 لا توجد رسائل حالياً</p>";
+        if (error || !data) {
+          table.innerHTML = `<tr><td colspan='5'>❌ فشل تحميل البيانات</td></tr>`;
           return;
         }
 
-        messages.forEach((msg) => {
-          const div = document.createElement("div");
-          div.className = "agent-message";
-          div.style.cssText = `
-        position: relative;
-        background: #ecf0f1;
-        padding: 10px 15px;
-        margin: 10px 0;
-        border-radius: 6px;
-        font-size: 15px;
-        line-height: 1.4;
-        white-space: pre-wrap;
-        word-wrap: break-word;
-        width: 100%;
-        max-width: 100%;
-        box-sizing: border-box;
-      `;
-          div.innerHTML = `
-        <strong style="font-size:18px;color:#333;">${msg.title}</strong><br/>
-        ${msg.body}<br/>
-        <span style="font-size:14px;color:#777;">
-          ${new Date(msg.created_at).toLocaleString()}
-        </span>
-        <button class="delete-msg-button"
-            style="position:absolute;top:10px;left:10px;padding:3px 7px;font-size:12px;cursor:pointer;"
-            data-message-id="${msg.id}">❌</button>`;
-          container.appendChild(div);
-        });
+        if (data.length === 0) {
+          table.innerHTML =
+            "<tr><td colspan='5'>📭 لا توجد طلبات وقف خدمة حاليًا</td></tr>";
+          return;
+        }
 
-        document.querySelectorAll(".delete-msg-button").forEach((btn) => {
-          btn.addEventListener("click", async (e) => {
-            const id = e.currentTarget.getAttribute("data-message-id");
-            await deleteAgentMessage(id, agent_id);
-          });
+        table.innerHTML = `
+      <tr style="background:#f8d7da;">
+        <td>الاسم</td>
+        <td>رقم الهاتف</td>
+        <td>السبب</td>
+        <td>تاريخ الطلب</td>
+        <td>الإجراء</td>
+      </tr>`;
+
+        data.forEach((c) => {
+          table.innerHTML += `
+        <tr style="background:#fff0f0;">
+          <td>${c.customer_name}</td>
+          <td>${c.customer_phone}</td>
+          <td>${c.reason || "—"}</td>
+          <td>${new Date(c.created_at).toLocaleString()}</td>
+          <td><button onclick="cancelStopRequest('${c.id}', '${
+            c.customer_name
+          }')">إلغاء الوقف</button></td>
+        </tr>`;
         });
       }
 
-      async function deleteAgentMessage(messageId, agent_id) {
-        if (!confirm("❓ هل أنت متأكد من حذف هذه الرسالة؟")) return;
+      // ✅ حفظ الموقع الجغرافي
+      async function updateLastLoginWithLocation(agent_id) {
+        if (!navigator.geolocation) return;
 
-        const { error } = await supabase
-          .from("messages")
-          .delete()
-          .eq("id", messageId);
-        if (error) {
-          alert("❌ حدث خطأ أثناء حذف الرسالة");
-          console.error(error);
-          return;
-        }
-
-        alert("✅ تم حذف الرسالة بنجاح");
-        await loadAgentMessages(agent_id);
+        navigator.geolocation.getCurrentPosition(async (pos) => {
+          const { latitude, longitude } = pos.coords;
+          await supabase
+            .from("agent_locations")
+            .insert([{ agent_id, latitude, longitude }]);
+        });
       }
 
-      // ⚡️ رسالة عشوائية
+      // ✅ رسالة تحفيزية
       function showRandomMotivationalMessage() {
         const messages = [
           "💪 يوم جديد، تحدٍ جديد! أنت قدها!",
-          "🌟 كل فاتورة يتم تحصيلها، تقربنا من الهدف!",
           "🚀 استمر، نجاحك على بعد خطوة!",
-          "☕ خذ نفسًا عميقًا، ثم عد لإتمام مهمتك بنجاح!",
-          "🎯 التركيز على الهدف هو مفتاح النجاح!",
-          "🌞 يوم سعيد ومليء بالتحصيل!",
-          "🔥 لا تتوقف، كل تحصيل يقربك من القمة!",
-          "⏳ الوقت كالسيف، استغل كل دقيقة في إنجاز جديد!",
-          "💼 النجاح يبدأ بخطوة، استمر في التقدم!",
-          "📝 كل ملاحظة تكتبها تزيد من احترافيتك!",
-          "💡 كل فكرة جديدة تقودك للتميز!",
-          "⚡ اجعل يومك مليئًا بالطاقة الإيجابية!",
-          "👑 أنت قائد نجاحك، خليك قدها!",
           "📈 كل مبلغ بتحصله هو نجاح جديد يُحسب لك!",
-          "🤝 تعاونك مع الفريق سرّ نجاحك!",
-          "🌟 لا تنسَ... الإنجاز الصغير يصنع الفرق الكبير!",
+          "☕ خذ نفسًا وابدأ من جديد!",
         ];
         const box = document.getElementById("sideMotivationalBox");
-        const randomMessage =
-          messages[Math.floor(Math.random() * messages.length)];
-        box.textContent = randomMessage;
+        box.textContent = messages[Math.floor(Math.random() * messages.length)];
         box.style.display = "block";
-        setTimeout(() => {
-          box.style.display = "none";
-        }, 10000);
+        setTimeout(() => (box.style.display = "none"), 10000);
       }
 
-      // ⚡️ بحث العملاء
-      const searchButton = document.getElementById("searchButton");
-      const searchInput = document.getElementById("searchInput");
-
-      searchButton.addEventListener("click", () => {
-        const query = searchInput.value.trim();
-        if (!query) {
-          alert("⚠️ أدخل الاسم أو الرقم للبحث");
-          return;
-        }
-        const filtered = customersData.filter(
-          (c) => c.name.includes(query) || c.phone.includes(query)
-        );
-        if (!filtered.length) {
-          alert("❌ لم يتم العثور على عملاء");
-          return;
-        }
-        displayCustomers(filtered);
-      });
-
-      // ⚡️ السهم للعودة لأعلى
-      const scrollToTopBtn = document.getElementById("scrollToTopBtn");
-
-      window.addEventListener("scroll", () => {
-        scrollToTopBtn.style.display = window.scrollY > 300 ? "block" : "none";
-      });
-      scrollToTopBtn.addEventListener("click", () => {
-        window.scrollTo({ top: 0, behavior: "smooth" });
-      });
-
-      // ⚡️ تحديث الموقع الحالي للمندوب - يظهر في كل مرة يسجل فيها دخول (بعد الموافقة)
-      async function updateLastLoginWithLocation(agent_id) {
-        if (!navigator.geolocation) {
-          alert("🌍 متصفحك لا يدعم تحديد الموقع");
-          return false;
-        }
-
-        return new Promise((resolve) => {
-          navigator.geolocation.getCurrentPosition(
-            async (position) => {
-              const latitude = position.coords.latitude;
-              const longitude = position.coords.longitude;
-
-              // ✅ حفظ الموقع الحالي في جدول agent_locations
-              const { error: locationError } = await supabase
-                .from("agent_locations")
-                .insert([
-                  {
-                    agent_id,
-                    latitude,
-                    longitude,
-                  },
-                ]);
-
-              if (locationError) {
-                console.error("❌ خطأ أثناء حفظ الموقع:", locationError);
-              } else {
-                console.log("✅ تم حفظ الموقع بنجاح:", { latitude, longitude });
-              }
-
-              resolve(true);
-            },
-            (error) => {
-              alert("❌ لم يتم السماح بمشاركة الموقع.");
-              console.error(error);
-              resolve(false);
-            }
-          );
-        });
-      }
-
-      window.requestStopService = async function (
-        customer_id,
-        customer_name,
-        customer_phone
-      ) {
-        const agent_id = localStorage.getItem("agent_id");
-
-        if (!agent_id) {
-          alert("❌ليس لديك صلاحية");
-          return;
-        }
-
-        if (
-          !confirm(
-            `⚠️ هل أنت متأكد من تقديم طلب وقف الخدمة للعميل: ${customer_name}?`
-          )
-        )
-          return;
-
-        try {
-          console.log("Agent ID:", agent_id);
-          const { error } = await supabase
-            .from("stop_requests") // ✅ الجدول على سوبابيز
-            .insert([
-              {
-                agent_id: agent_id,
-                customer_id,
-                customer_name,
-                customer_phone,
-              },
-            ]);
-
-          if (error) {
-            alert("❌ حدث خطأ أثناء تقديم الطلب");
-            console.error(error);
-          } else {
-            alert(`✅ تم تقديم طلب وقف الخدمة للعميل ${customer_name}`);
-            // 👇 تلوين السطر بالأحمر
-            const customerRow = document.getElementById(`row_${customer_id}`);
-            if (customerRow) {
-              customerRow.style.backgroundColor = "#ffaaaa"; // لون أحمر فاتح
-            }
-          }
-        } catch (error) {
-          alert("❌ حدث خطأ غير متوقع أثناء تقديم الطلب");
-          console.error(error);
-        }
-      };
-      window.onload = async function () {
-        const agent_id = localStorage.getItem("agent_id");
-        if (!agent_id) {
-          alert("❌ليس لديك صلاحية");
-          return;
-        }
-
-        // ✅ تحديث الموقع عند الدخول
-        const locationAllowed = await updateLastLoginWithLocation(agent_id);
-
-        // ✅ تحميل البيانات بعد تسجيل الدخول والموقع
-        await loadCustomers(agent_id);
-        await loadAgentMessages(agent_id);
-        showRandomMotivationalMessage();
+      // ✅ أكوردين
+      window.toggleAccordion = (id) => {
+        const section = document.getElementById(id);
+        section.style.display =
+          section.style.display === "none" ? "block" : "none";
       };
     </script>
   </body>

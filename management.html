@@ -2,167 +2,182 @@
 <html lang="ar" dir="rtl">
   <head>
     <meta charset="UTF-8" />
-    <title>رفع البيانات وإدارة المناديب</title>
+    <title>إدارة العملاء حسب الأقسام</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link rel="stylesheet" href="./header.css" />
     <style>
-      /* =========== الشكل الأساسي =========== */
+      /* الأساسيات العامة */
       body {
-        font-family: Arial, sans-serif;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
         background: linear-gradient(135deg, #2c3e50, #4ca1af);
         color: #f5f5f5;
         padding: 20px;
-        max-width: 800px;
+        max-width: 1200px;
         margin: auto;
-        line-height: 1.5;
+        line-height: 1.6;
       }
 
-      /* =========== العناوين =========== */
-      h2,
-      h3 {
-        text-align: center;
-        font-weight: bold;
-        margin: 15px 0;
-      }
+      /* العنوان الرئيسي */
       h2 {
-        font-size: 1.3rem;
-        color: #fffae3;
-      }
-      h3 {
-        font-size: 1.1rem;
-        color: #fffae3;
-      }
-
-      /* =========== اللينكات =========== */
-      a {
-        color: #fffa90;
-        text-decoration: none;
-        font-weight: bold;
-        transition: color 0.3s, text-decoration 0.3s;
-      }
-      a:hover {
-        text-decoration: underline;
-        color: #ffe97f;
-      }
-
-      /* =========== الحاويات العامة =========== */
-      #addAgentContainer,
-      .form-container {
-        margin: 25px auto;
-        padding: 20px;
-        background-color: rgba(255, 255, 255, 0.08);
-        border-radius: 6px;
-        box-shadow: 0px 4px 15px rgba(255, 255, 255, 0.1);
-      }
-
-      /* =========== الفورم على سطرين =========== */
-      .form-row {
-        display: flex;
-        justify-content: space-between;
-        flex-wrap: wrap;
-        gap: 20px;
-      }
-      .form-group {
-        flex: 1 1 48%;
-        display: flex;
-        flex-direction: column;
-        margin-bottom: 15px;
-      }
-      label {
-        font-size: 0.9rem;
-        font-weight: 600;
-        margin-bottom: 5px;
-        color: #fffae3;
-      }
-      select,
-      input,
-      button {
-        padding: 9px 12px;
-        font-size: 0.95rem;
-        border-radius: 4px;
-        border: none;
-        outline: none;
-        transition: box-shadow 0.3s;
-      }
-      select,
-      input {
-        width: 80%; /* مريح على الديسكتوب */
-        margin-bottom: 20px;
-      }
-      select:focus,
-      input:focus {
-        box-shadow: 0px 0px 8px rgba(255, 250, 227, 0.5);
-      }
-
-      /* =========== الجدول =========== */
-      table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 0.9rem;
-        margin: 20px 0;
-        border-radius: 8px;
-        overflow: hidden;
-      }
-      table thead {
-        background-color: rgba(255, 255, 255, 0.15);
-      }
-      table th,
-      table td {
-        padding: 8px;
         text-align: center;
-        border-bottom: 1px solid #888;
-      }
-      table tr:hover {
-        background-color: rgba(255, 255, 255, 0.07);
+        color: #fffae3;
+        margin-bottom: 30px;
       }
 
-      /* =========== الأزرار =========== */
+      /* تنسيق الحقول والأزرار */
+      input,
+      select,
+      button {
+        padding: 8px 12px;
+        font-size: 0.9rem;
+        border-radius: 6px;
+        border: none;
+        margin: 5px 0;
+        outline: none;
+      }
+
       button {
         cursor: pointer;
         font-weight: bold;
         background-color: #fffae3;
         color: #2c3e50;
-        margin: 5px 0;
-        padding: 9px 15px;
-        border-radius: 5px;
-        transition: background-color 0.3s;
+        transition: background-color 0.3s ease;
       }
+
       button:hover {
-        background-color: #ffe97f;
+        background-color: #eae3be;
       }
 
-      /* =========== الرسائل وحالة التحديث =========== */
-      #uploadLoader {
-        font-size: 14px;
-        color: #ffe97f;
+      /* الحاوية العامة */
+      div > input,
+      div > select,
+      div > button {
+        margin: 10px 10px 10px 0;
+        display: inline-block;
       }
-      #addAgentAlert,
-      #uploadStatus,
-      #clearStatus {
-        margin: 10px 0;
-        padding: 8px;
-        font-size: 13px;
-        font-weight: bold;
-        border-radius: 4px;
+
+      /* البحث + الفلاتر */
+      #searchInput {
+        width: 250px;
+      }
+      #newSectionName {
+        width: 200px;
+      }
+
+      /* البلوكات الخاصة بالأقسام */
+      .section-block {
+        margin-top: 30px;
+        background: rgba(255, 255, 255, 0.07);
+        padding: 15px;
+        border-radius: 12px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+      }
+
+      /* رأس كل قسم */
+      .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #34495e;
+        padding: 10px;
+        border-radius: 8px;
+        flex-wrap: wrap;
+      }
+
+      .section-header h3 {
+        color: #fff;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 0;
+      }
+
+      .section-header input {
+        font-size: 1rem;
+        padding: 6px;
+        border-radius: 6px;
+        width: 180px;
+      }
+
+      /* الجدول */
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.9rem;
+        margin-top: 10px;
+      }
+
+      th,
+      td {
+        padding: 10px;
         text-align: center;
-      }
-      #addAgentAlert {
-        display: none;
+        border-bottom: 1px solid #888;
+        background-color: rgba(255, 255, 255, 0.06);
       }
 
-      /* =========== موبايل =========== */
+      th {
+        background-color: rgba(255, 255, 255, 0.15);
+        font-weight: bold;
+      }
+
+      table input,
+      table select {
+        width: 100%;
+        padding: 6px;
+        border-radius: 4px;
+        border: none;
+        background-color: #fff;
+        color: #000;
+      }
+
+      /* زر الحفظ والحذف في الجدول */
+      td button {
+        padding: 6px 10px;
+        font-size: 1rem;
+        border-radius: 6px;
+      }
+
+      /* الفوتر */
+      footer {
+        background: #2c3e50;
+        color: #fff;
+        text-align: center;
+        padding: 15px;
+        font-size: 14px;
+        border-top-left-radius: 10px;
+        border-top-right-radius: 10px;
+        margin-top: 40px;
+      }
+
+      /* الهواتف */
       @media (max-width: 768px) {
-        .form-group {
-          flex: 1 1 100%; /* عنصر كامل على السطر على موبايل */
+        .section-header {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 10px;
         }
-        select,
-        input {
-          width: 100%; /* مريح على موبايل */
+
+        .section-header input {
+          width: 100%;
+        }
+
+        #searchInput,
+        #newSectionName {
+          width: 100%;
+        }
+
+        table {
+          font-size: 0.85rem;
+        }
+
+        th,
+        td {
+          padding: 6px;
         }
       }
     </style>
   </head>
   <body>
-    <!-- =========== الهيدر =========== -->
     <header>
       <div class="logo-container">
         <a href="./index.html">
@@ -176,7 +191,7 @@
 
       <!-- القائمة المنسدلة -->
       <div id="navMenu" class="nav-menu">
-        <a href="./management.html"> تعديل بيانات العملاء ⬅</a>
+        <a href="./management.html"> ادارة بيانات العملاء ⬅</a>
         <a href="./agents_performance.html">أداء المناديب ⬅</a>
         <a href="./dashboard.html">لوحة التحكم ⬅</a>
         <a href="./disconnected_lines.html">الخطوط المتوقفة ⬅</a>
@@ -185,66 +200,63 @@
       </div>
     </header>
     <script src="./header.js"></script>
-    <!-- =========================== اختيار مندوب =========================== -->
-    <div id="adminAgentSelectContainer">
-      <h3>👔 اختر مندوب لعرض الجدول</h3>
+
+    <h2>إدارة العملاء حسب الأقسام</h2>
+
+    <div>
+      <label>اختر مندوب:</label>
       <select id="adminAgentSelect">
-        <option value="">-- اختر مندوب --</option>
+        <option value="">-- اختر --</option>
       </select>
     </div>
-    <div style="display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap">
-      <select id="sectionFilter" style="padding: 8px; font-size: 16px">
-        <option value="all">📂 عرض جميع الأقسام</option>
-      </select>
 
-      <input
-        type="text"
-        id="searchInput"
-        placeholder="🔍 ابحث عن عميل بالاسم أو الرقم"
-        style="
-          flex-grow: 1;
-          padding: 8px;
-          font-size: 16px;
-          border: 1px solid #ccc;
-        "
-      />
+    <div>
+      <input id="searchInput" placeholder="🔍 بحث بالاسم أو الهاتف" />
+      <select id="sectionFilter">
+        <option value="all">📁 كل الأقسام</option>
+      </select>
+      <button id="exportExcel">📤 تصدير Excel</button>
     </div>
 
-    <!-- =========================== الجدول القابل للتعديل =========================== -->
-    <table id="adminCustomersTable">
-      <thead>
-        <tr>
-          <th>القسم</th>
-          <th>اسم العميل</th>
-          <th>الهاتف</th>
-          <th>العنوان</th>
-          <th>المبلغ</th>
-          <th>الحالة</th>
-          <th>حفظ</th>
-        </tr>
-      </thead>
+    <div>
+      <input id="newSectionName" placeholder="➕ اسم القسم الجديد" />
+      <button id="addSectionBtn">إضافة قسم</button>
+    </div>
 
-      <tbody></tbody>
-    </table>
+    <div id="sectionsContainer"></div>
 
-    <!-- =========== حذف البيانات =========== -->
-    <h2>حذف كل البيانات</h2>
-    <button id="clearButton">🧨 حذف جميع البيانات</button>
-    <div id="clearStatus"></div>
-
-    <!-- =========== الفوتر =========== -->
-    <footer
+    <button id="clearButton">🧨 حذف كل العملاء</button>
+    <!-- زر الرجوع لأعلى -->
+    <button
+      id="scrollToTopBtn"
       style="
-        background: #2c3e50;
+        position: fixed;
+        bottom: 30px;
+        left: 30px;
+        font-size: 30px;
+        padding: 12px 14px;
+        border-radius: 50%;
+        border: none;
+        background-color: #3498db;
         color: #fff;
-        text-align: center;
-        padding: 15px;
-        font-size: 14px;
-        border-top-left-radius: 10px;
-        border-top-right-radius: 10px;
-        margin-top: 40px;
+        cursor: pointer;
+        display: none;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        z-index: 1001;
       "
     >
+      ⬆️
+    </button>
+    <script>
+      const scrollBtn = document.getElementById("scrollToTopBtn");
+      window.onscroll = () => {
+        scrollBtn.style.display = window.scrollY > 300 ? "block" : "none";
+      };
+      scrollBtn.onclick = () => window.scrollTo({ top: 0, behavior: "smooth" });
+    </script>
+
+    <!-- =========== الفوتر =========== -->
+    <footer>
       <div>جميع الحقوق محفوظة &copy; فوكس بيزنيس</div>
       <div>مطور النظام: عبدالله هاني</div>
       <div>خدمة العملاء: 01212555345</div>
@@ -258,265 +270,230 @@
         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5aHRzZHFjY3l2eWdlbGVremV5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk3NTQwOTMsImV4cCI6MjA2NTMzMDA5M30.bRjHD6OkziXjfavEX-tA-6IFdag7KoFBqLRgNLqwcdg"
       );
 
+      const agentSelect = document.getElementById("adminAgentSelect");
+      const sectionFilter = document.getElementById("sectionFilter");
+      const searchInput = document.getElementById("searchInput");
+      const container = document.getElementById("sectionsContainer");
+      let currentCustomers = [];
+
       window.addEventListener("load", async () => {
-        await loadAgentsForAdmin();
-        document
-          .getElementById("adminAgentSelect")
-          ?.addEventListener("change", (e) => {
-            if (e.target.value) {
-              loadCustomersForAdmin(e.target.value);
-            }
-          });
+        const { data: agents } = await supabase
+          .from("agents")
+          .select("id, name");
+        agents?.forEach((a) => {
+          const opt = document.createElement("option");
+          opt.value = a.id;
+          opt.textContent = a.name;
+          agentSelect.appendChild(opt);
+        });
       });
 
-      async function loadAgentsForAdmin() {
-        const select = document.getElementById("adminAgentSelect");
-        if (!select) return;
+      agentSelect.addEventListener("change", loadCustomersByAgent);
 
-        const { data: agents, error } = await supabase
-          .from("agents")
-          .select("*");
-        if (error) return console.error(error);
-
-        select.innerHTML = '<option value="">-- اختر مندوب --</option>';
-        agents.forEach((agent) => {
-          const option = document.createElement("option");
-          option.value = agent.id;
-          option.textContent = agent.name;
-          select.appendChild(option);
-        });
-      }
-
-      async function loadCustomersForAdmin(agent_id) {
-        const tableBody = document.querySelector("#adminCustomersTable tbody");
-        tableBody.innerHTML = "";
-
-        const { data: customers, error } = await supabase
+      async function loadCustomersByAgent() {
+        const agentId = agentSelect.value;
+        if (!agentId) return;
+        const { data: customers } = await supabase
           .from("customers")
           .select("*")
-          .eq("agent_id", agent_id)
-          .order("section", { ascending: true });
+          .eq("agent_id", agentId);
+        currentCustomers = customers || [];
+        renderSections(currentCustomers);
+        updateSectionFilter(currentCustomers);
+      }
 
-        if (error) return alert("❌ حدث خطأ أثناء جلب العملاء");
-        if (!customers.length) {
-          tableBody.innerHTML = '<tr><td colspan="7">لا توجد عملاء</td></tr>';
-          return;
-        }
-
-        const groupedCustomers = customers.reduce((acc, cust) => {
-          const section = cust.section || "غير محدد";
-          if (!acc[section]) acc[section] = [];
-          acc[section].push(cust);
+      function groupBySection(data) {
+        return data.reduce((acc, cust) => {
+          const sec = cust.section || "غير محدد";
+          acc[sec] = acc[sec] || [];
+          acc[sec].push(cust);
           return acc;
         }, {});
+      }
 
-        for (const sectionName in groupedCustomers) {
-          const sectionRow = document.createElement("tr");
-          sectionRow.innerHTML = `
-<td colspan="7" style="background-color:#34495e;color:#fff">
-📁 ${sectionName}
-<input value="${sectionName}" data-oldname="${sectionName}" class="editSectionInput" />
-<button class="saveSectionBtn" data-oldname="${sectionName}">💾 حفظ القسم</button>
-<button class="addCustomerToSectionBtn" data-section="${sectionName}">➕ إضافة عميل</button>
-</td>`;
-          tableBody.appendChild(sectionRow);
+      function renderSections(customers) {
+        container.innerHTML = "";
+        const grouped = groupBySection(customers);
 
-          groupedCustomers[sectionName].forEach((cust) => {
-            const row = document.createElement("tr");
-            row.innerHTML = `
-<td>${cust.section}</td>
-<td><input value="${cust.name}" data-id="${cust.id}" data-field="name"/></td>
-<td><input value="${cust.phone}" data-id="${cust.id}" data-field="phone"/></td>
-<td><input value="${cust.address || ""}" data-id="${
-              cust.id
-            }" data-field="address"/></td>
-<td><input type="number" value="${cust.due_amount}" data-id="${
-              cust.id
-            }" data-field="due_amount"/></td>
-<td>
-  <select data-id="${cust.id}" data-field="collection_status">
-    <option ${
-      cust.collection_status === "تم التحصيل" ? "selected" : ""
-    }>تم التحصيل</option>
-    <option ${
-      cust.collection_status !== "تم التحصيل" ? "selected" : ""
-    }>لم يتم التحصيل</option>
-  </select>
-</td>
-<td>
-  <button class="saveCustomerBtn" data-id="${cust.id}">💾 حفظ</button>
-  <button class="deleteCustomerBtn" data-id="${cust.id}">🗑️ حذف</button>
-</td>`;
-            tableBody.appendChild(row);
-          });
+        for (const section in grouped) {
+          const block = document.createElement("div");
+          block.className = "section-block";
+
+          const safeId = section.replace(/[^\w\-]/g, "-");
+          const inputId = `sectionInput-${safeId}`;
+          const saveBtnId = `saveBtn-${safeId}`;
+
+          block.innerHTML = `
+            <div class="section-header">
+              <h3>📁 <input id="${inputId}" value="${section}" /> 
+              <button id="${saveBtnId}">💾 حفظ</button></h3>
+              <button onclick="addCustomer('${section}')">➕ إضافة عميل</button>
+            </div>
+            <table>
+              <thead>
+                <tr><th>الاسم</th><th>الهاتف</th><th>العنوان</th><th>المبلغ</th><th>الحالة</th><th>💾</th><th>🗑️</th></tr>
+              </thead>
+              <tbody>
+                ${grouped[section]
+                  .map(
+                    (c) => `
+                  <tr>
+                    <td><input data-id="${c.id}" data-field="name" value="${
+                      c.name
+                    }" /></td>
+                    <td><input data-id="${c.id}" data-field="phone" value="${
+                      c.phone
+                    }" /></td>
+                    <td><input data-id="${c.id}" data-field="address" value="${
+                      c.address
+                    }" /></td>
+                    <td><input data-id="${
+                      c.id
+                    }" data-field="due_amount" type="number" value="${
+                      c.due_amount
+                    }" /></td>
+                    <td>
+                      <select data-id="${c.id}" data-field="collection_status">
+                        <option ${
+                          c.collection_status === "تم التحصيل" ? "selected" : ""
+                        }>تم التحصيل</option>
+                        <option ${
+                          c.collection_status !== "تم التحصيل" ? "selected" : ""
+                        }>لم يتم التحصيل</option>
+                      </select>
+                    </td>
+                    <td><button onclick="saveCustomer('${
+                      c.id
+                    }', this)">💾</button></td>
+                    <td><button onclick="deleteCustomer('${
+                      c.id
+                    }', this)">🗑️</button></td>
+                  </tr>
+                `
+                  )
+                  .join("")}
+              </tbody>
+            </table>
+          `;
+          container.appendChild(block);
+
+          setTimeout(() => {
+            const input = document.getElementById(inputId);
+            const saveBtn = document.getElementById(saveBtnId);
+            if (input && saveBtn) {
+              saveBtn.addEventListener("click", async () => {
+                const newName = input.value.trim();
+                if (!newName || newName === section) return;
+                await supabase
+                  .from("customers")
+                  .update({ section: newName })
+                  .eq("section", section);
+                await loadCustomersByAgent();
+              });
+            }
+          }, 0);
         }
-
-        populateSectionFilter(customers);
       }
 
-      function populateSectionFilter(customers) {
-        const select = document.getElementById("sectionFilter");
-        if (!select) return;
+      window.saveCustomer = async (id, btn) => {
+        const row = btn.closest("tr");
+        const inputs = row.querySelectorAll("[data-field]");
+        const updated = {};
+        inputs.forEach((inp) => {
+          updated[inp.dataset.field] =
+            inp.dataset.field === "due_amount"
+              ? Number(inp.value)
+              : inp.value.trim();
+        });
+        updated.billing_month = new Date().toISOString().slice(0, 7);
+        await supabase.from("customers").update(updated).eq("id", id);
+        btn.textContent = "✅";
+        setTimeout(() => (btn.textContent = "💾"), 1000);
+      };
 
-        const uniqueSections = new Set(
-          customers.map((c) => c.section || "غير محدد")
+      window.deleteCustomer = async (id, btn) => {
+        if (!confirm("❌ هل تريد حذف العميل؟")) return;
+        await supabase.from("customers").delete().eq("id", id);
+        await loadCustomersByAgent();
+      };
+
+      window.addCustomer = async (section) => {
+        const agent_id = agentSelect.value;
+        if (!agent_id) return alert("اختر مندوب أولًا");
+        const name = prompt("اسم العميل:");
+        if (!name) return;
+        const phone = prompt("رقم الهاتف:") || "";
+        const address = prompt("العنوان:") || "";
+        const due_amount = prompt("المبلغ:", "0");
+
+        await supabase.from("customers").insert({
+          name,
+          phone,
+          address,
+          due_amount: Number(due_amount),
+          section,
+          agent_id,
+          billing_month: new Date().toISOString().slice(0, 7),
+          collection_status: "لم يتم التحصيل",
+        });
+
+        await loadCustomersByAgent();
+      };
+
+      searchInput.addEventListener("input", () => {
+        const term = searchInput.value.toLowerCase();
+        const filtered = currentCustomers.filter(
+          (c) =>
+            c.name.toLowerCase().includes(term) ||
+            c.phone.toLowerCase().includes(term)
         );
-        select.innerHTML = '<option value="all">📂 عرض جميع الأقسام</option>';
-        uniqueSections.forEach((section) => {
-          const option = document.createElement("option");
-          option.value = section;
-          option.textContent = section;
-          select.appendChild(option);
+        renderSections(filtered);
+      });
+
+      sectionFilter.addEventListener("change", () => {
+        const selected = sectionFilter.value;
+        const filtered =
+          selected === "all"
+            ? currentCustomers
+            : currentCustomers.filter((c) => c.section === selected);
+        renderSections(filtered);
+      });
+
+      function updateSectionFilter(customers) {
+        const uniqueSections = [
+          ...new Set(customers.map((c) => c.section || "غير محدد")),
+        ];
+        sectionFilter.innerHTML = '<option value="all">📁 كل الأقسام</option>';
+        uniqueSections.forEach((sec) => {
+          const opt = document.createElement("option");
+          opt.value = sec;
+          opt.textContent = sec;
+          sectionFilter.appendChild(opt);
         });
       }
 
-      document
-        .getElementById("searchInput")
-        ?.addEventListener("keyup", applyFilters);
-      document
-        .getElementById("sectionFilter")
-        ?.addEventListener("change", applyFilters);
+      document.getElementById("addSectionBtn").addEventListener("click", () => {
+        const name = document.getElementById("newSectionName").value.trim();
+        if (!name) return;
+        addCustomer(name);
+      });
 
-      function applyFilters() {
-        const filter = document
-          .getElementById("searchInput")
-          .value.toLowerCase();
-        const selectedSection = document.getElementById("sectionFilter").value;
-        const rows = document.querySelectorAll("#adminCustomersTable tbody tr");
+      document.getElementById("exportExcel").addEventListener("click", () => {
+        const ws = XLSX.utils.json_to_sheet(currentCustomers);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "العملاء");
+        XLSX.writeFile(wb, "customers.xlsx");
+      });
 
-        let showSection = true;
-        rows.forEach((row) => {
-          const isSectionRow = row.querySelector("td")?.colSpan === 7;
-          if (isSectionRow) {
-            const sectionText = row.textContent.trim();
-            showSection =
-              selectedSection === "all" ||
-              sectionText.includes(selectedSection);
-            row.style.display = showSection ? "" : "none";
-          } else {
-            if (!showSection) {
-              row.style.display = "none";
-              return;
-            }
-            const name =
-              row.cells[1]?.querySelector("input")?.value.toLowerCase() || "";
-            const phone =
-              row.cells[2]?.querySelector("input")?.value.toLowerCase() || "";
-            row.style.display =
-              name.includes(filter) || phone.includes(filter) ? "" : "none";
-          }
-        });
-      }
-
-      document
-        .querySelector("#adminCustomersTable")
-        ?.addEventListener("click", async (e) => {
-          const id = e.target.getAttribute("data-id");
-
-          if (e.target.classList.contains("saveCustomerBtn")) {
-            const row = e.target.closest("tr");
-            const inputs = row.querySelectorAll("[data-field]");
-
-            const updatedData = {};
-            inputs.forEach((input) => {
-              const field = input.getAttribute("data-field");
-              updatedData[field] = input.value.trim();
-            });
-            if (updatedData.due_amount) {
-              updatedData.due_amount = Number(updatedData.due_amount);
-            }
-
-            const { error } = await supabase
-              .from("customers")
-              .update(updatedData)
-              .eq("id", id);
-            if (error) {
-              alert("❌ حدث خطأ أثناء حفظ التعديلات");
-            } else {
-              e.target.textContent = "✅ تم";
-              setTimeout(() => (e.target.textContent = "💾 حفظ"), 1500);
-            }
-          }
-
-          if (e.target.classList.contains("deleteCustomerBtn")) {
-            if (confirm("⚠️ هل تريد حذف العميل؟")) {
-              const { error } = await supabase
-                .from("customers")
-                .delete()
-                .eq("id", id);
-              if (error) alert("❌ حدث خطأ أثناء الحذف");
-              else e.target.closest("tr").remove();
-            }
-          }
-
-          if (e.target.classList.contains("saveSectionBtn")) {
-            const oldName = e.target.getAttribute("data-oldname");
-            const input =
-              e.target.parentElement.querySelector(".editSectionInput");
-            const newName = input.value.trim();
-            if (!newName || newName === oldName) return;
-
-            const { error } = await supabase
-              .from("customers")
-              .update({ section: newName })
-              .eq("section", oldName);
-            if (error) alert("❌ فشل تعديل اسم القسم");
-            else {
-              alert("✅ تم تعديل القسم بنجاح");
-              loadCustomersForAdmin(
-                document.getElementById("adminAgentSelect").value
-              );
-            }
-          }
-
-          if (e.target.classList.contains("addCustomerToSectionBtn")) {
-            const section = e.target.getAttribute("data-section");
-            const agent_id = document.getElementById("adminAgentSelect").value;
-            if (!agent_id) return alert("❌ لم يتم اختيار مندوب");
-
-            const name = prompt("أدخل اسم العميل:");
-            if (!name) return;
-
-            const phone = prompt("رقم الهاتف:");
-            const address = prompt("العنوان:");
-            const due_amount = prompt("المبلغ المستحق:", "0");
-
-            const { error } = await supabase.from("customers").insert({
-              name,
-              phone,
-              address,
-              due_amount: Number(due_amount),
-              section,
-              agent_id,
-              collection_status: "لم يتم التحصيل",
-            });
-
-            if (error) alert("❌ فشل في إضافة العميل");
-            else {
-              alert("✅ تم إضافة العميل بنجاح");
-              loadCustomersForAdmin(agent_id);
-            }
-          }
-        });
       document
         .getElementById("clearButton")
-        ?.addEventListener("click", async () => {
+        .addEventListener("click", async () => {
           if (confirm("⚠️ هل تريد حذف كل العملاء؟")) {
-            const { error } = await supabase
+            await supabase
               .from("customers")
               .delete()
-              .neq("id", 0);
-            const status = document.getElementById("clearStatus");
-
-            if (error) {
-              status.textContent = "❌ فشل الحذف";
-              status.style.color = "red";
-            } else {
-              status.textContent = "✅ تم حذف كل البيانات";
-              status.style.color = "lightgreen";
-              document.querySelector("#adminCustomersTable tbody").innerHTML =
-                "";
-            }
+              .neq("id", "00000000-0000-0000-0000-000000000000");
+            container.innerHTML = "";
           }
         });
     </script>

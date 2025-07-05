@@ -2,77 +2,184 @@
 <html lang="ar" dir="rtl">
   <head>
     <meta charset="UTF-8" />
-    <title>إدارة المندوبين</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>لوحة إدارة المناديب</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
+      /* ===== الأساسيات العامة ===== */
       body {
-        font-family: Arial, sans-serif;
-        max-width: 900px;
-        margin: 20px auto;
-        direction: rtl;
-        background: #f9f9f9;
+        margin: 0;
+        padding: 0;
+        font-family: "Segoe UI", sans-serif;
+        background: #f4f6f8;
         color: #333;
       }
+
+      /* ===== الهيدر ===== */
+      header {
+        background: #2d4059;
+        color: white;
+        padding: 1rem 2rem;
+        text-align: center;
+        font-size: 1.6rem;
+        font-weight: bold;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      /* ===== الحاوية العامة ===== */
+      .container {
+        max-width: 1200px;
+        margin: 2rem auto;
+        padding: 1.5rem;
+        background: white;
+        border-radius: 14px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+      }
+
+      /* ===== أدوات التحكم ===== */
+      .controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 1.5rem;
+      }
+
+      .controls input,
+      .controls select,
+      .controls button {
+        padding: 0.65rem 1rem;
+        font-size: 1rem;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        transition: all 0.3s ease;
+      }
+
+      .controls input:focus,
+      .controls select:focus {
+        outline: none;
+        border-color: #2d4059;
+        box-shadow: 0 0 3px #2d405980;
+      }
+
+      .controls input {
+        min-width: 200px;
+      }
+
+      button {
+        cursor: pointer;
+        background: #2d4059;
+        color: white;
+        border: none;
+      }
+
+      button:hover {
+        background: #3e5879;
+      }
+
+      /* ===== الجدول ===== */
       table {
         width: 100%;
         border-collapse: collapse;
-        background: #fff;
-        box-shadow: 0 0 10px #ccc;
+        margin-top: 1rem;
       }
+
       th,
       td {
-        padding: 10px;
-        border: 1px solid #ddd;
+        padding: 0.9rem 0.6rem;
         text-align: center;
+        border-bottom: 1px solid #eee;
+        font-size: 0.95rem;
       }
+
       th {
-        background-color: #34495e;
-        color: white;
+        background: #f0f0f0;
+        font-weight: bold;
+        color: #2d4059;
       }
-      input,
-      select {
-        width: 90%;
-        padding: 5px;
+
+      td input,
+      td select {
+        width: 100%;
+        padding: 6px;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+        font-size: 0.9rem;
         box-sizing: border-box;
-        font-size: 1rem;
       }
-      button {
-        cursor: pointer;
-        padding: 5px 10px;
-        font-size: 1rem;
-      }
-      .alert {
-        margin: 10px 0;
-        padding: 10px;
-        color: white;
-        display: none;
-        border-radius: 4px;
-      }
-      .alert.success {
-        background-color: #28a745;
-      }
-      .alert.error {
-        background-color: #dc3545;
+
+      /* ===== الهواتف ===== */
+      @media (max-width: 768px) {
+        .controls {
+          flex-direction: column;
+        }
+
+        .controls input,
+        .controls select,
+        .controls button {
+          width: 100%;
+        }
+
+        table {
+          font-size: 0.85rem;
+        }
+
+        th,
+        td {
+          padding: 0.6rem;
+        }
       }
     </style>
+    <link rel="stylesheet" href="./header.css" />
   </head>
   <body>
-    <h1>إدارة المندوبين</h1>
+    <header>
+      <div class="logo-container">
+        <a href="./index.html">
+          <img src="./Orange_logo.svg.png" alt="Logo" />
+        </a>
+        <h2 style="margin: 0">فوكس بيزنيس</h2>
+      </div>
 
-    <table id="agentsTable">
-      <thead>
-        <tr>
-          <th>الاسم</th>
-          <th>البريد الإلكتروني</th>
-          <th>الدور</th>
-          <th>إجراءات</th>
-        </tr>
-      </thead>
-      <tbody>
-        <!-- سيتم تعبئة البيانات هنا -->
-      </tbody>
-    </table>
+      <!-- زر التوجال -->
+      <button class="toggle-btn" onclick="toggleMenu()">☰</button>
 
-    <div id="editAgentsAlert" class="alert"></div>
+      <!-- القائمة المنسدلة -->
+      <div id="navMenu" class="nav-menu">
+        <a href="./management.html"> ادارة بيانات العملاء ⬅</a>
+        <a href="./agents_performance.html">أداء المناديب ⬅</a>
+        <a href="./dashboard.html">لوحة التحكم ⬅</a>
+        <a href="./disconnected_lines.html">الخطوط المتوقفة ⬅</a>
+        <a href="./notes.html">ملاحظات المناديب ⬅</a>
+        <a href="./admin.html"> ادارة المناديب ⬅</a>
+      </div>
+    </header>
+    <script src="./header.js"></script>
+    <div class="container">
+      <div class="controls">
+        <input type="text" id="search" placeholder="🔍 بحث بالاسم أو البريد" />
+        <input type="text" id="newName" placeholder="اسم المندوب" />
+        <input type="email" id="newEmail" placeholder="البريد الإلكتروني" />
+        <input type="password" id="newPassword" placeholder="كلمة المرور" />
+        <select id="newRole">
+          <option value="agent">مندوب</option>
+          <option value="admin">مدير</option>
+        </select>
+        <button onclick="addAgent()">➕ إضافة</button>
+        <button onclick="exportToExcel()">📤 تصدير Excel</button>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>الاسم</th>
+            <th>البريد</th>
+            <th>الدور</th>
+            <th>آخر دخول</th>
+            <th>إجراءات</th>
+          </tr>
+        </thead>
+        <tbody id="agentsBody"></tbody>
+      </table>
+    </div>
 
     <script type="module">
       import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
@@ -82,116 +189,146 @@
         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5aHRzZHFjY3l2eWdlbGVremV5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk3NTQwOTMsImV4cCI6MjA2NTMzMDA5M30.bRjHD6OkziXjfavEX-tA-6IFdag7KoFBqLRgNLqwcdg"
       );
 
-      // تحميل بيانات المندوبين
-      async function loadAgentsForEdit() {
-        const tbody = document.querySelector("#agentsTable tbody");
-        tbody.innerHTML = "";
-        const { data: agents, error } = await supabase
+      let agents = [];
+
+      document.getElementById("search").addEventListener("input", (e) => {
+        const term = e.target.value.toLowerCase();
+        renderAgents(
+          agents.filter(
+            (a) =>
+              a.name?.toLowerCase().includes(term) ||
+              a.email?.toLowerCase().includes(term)
+          )
+        );
+      });
+
+      async function loadAgents() {
+        const { data, error } = await supabase
           .from("agents")
-          .select("*");
-        const alertBox = document.getElementById("editAgentsAlert");
-        alertBox.style.display = "none";
-
-        if (error) {
-          alertBox.textContent = "❌ خطأ في تحميل المندوبين: " + error.message;
-          alertBox.className = "alert error";
-          alertBox.style.display = "block";
-          return;
+          .select("*")
+          .order("created_at", { ascending: false });
+        if (!error) {
+          agents = data;
+          renderAgents(agents);
         }
+      }
 
-        agents.forEach((agent) => {
-          const tr = document.createElement("tr");
-          tr.innerHTML = `
-          <td><input type="text" value="${agent.name}" data-id="${
-            agent.id
-          }" data-field="name" /></td>
-          <td><input type="email" value="${agent.email}" data-id="${
-            agent.id
-          }" data-field="email" /></td>
-          <td>
-            <select data-id="${agent.id}" data-field="role">
-              <option value="agent" ${
-                agent.role === "agent" ? "selected" : ""
-              }>مندوب</option>
-              <option value="admin" ${
-                agent.role === "admin" ? "selected" : ""
-              }>أدمن</option>
-            </select>
-          </td>
-          <td>
-            <button class="saveAgentBtn" data-id="${agent.id}">💾 حفظ</button>
-            <button class="deleteAgentBtn" data-id="${agent.id}">🗑️ حذف</button>
-          </td>
-        `;
-          tbody.appendChild(tr);
+      function escapeHTML(str) {
+        return (str || "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      }
+
+      function renderAgents(data) {
+        const tbody = document.getElementById("agentsBody");
+        tbody.innerHTML = "";
+
+        data.forEach((agent) => {
+          const safeName = escapeHTML(agent.name);
+          const safeEmail = escapeHTML(agent.email);
+
+          const row = document.createElement("tr");
+          row.innerHTML = `
+      <td><input type="text" value="${safeName}" id="name-${agent.id}"></td>
+      <td><input type="email" value="${safeEmail}" readonly style="background:#eee; cursor:not-allowed;"></td>
+      <td>
+        <select id="role-${agent.id}">
+          <option value="agent" ${
+            agent.role === "agent" ? "selected" : ""
+          }>مندوب</option>
+          <option value="admin" ${
+            agent.role === "admin" ? "selected" : ""
+          }>مدير</option>
+        </select>
+      </td>
+      <td>${
+        agent.last_login ? new Date(agent.last_login).toLocaleString() : "-"
+      }</td>
+      <td>
+        <button onclick="saveAgent('${agent.id}')">💾 حفظ</button>
+        <button onclick="deleteAgent('${agent.id}')">🗑️ حذف</button>
+      </td>
+    `;
+          tbody.appendChild(row);
         });
       }
 
-      // التعامل مع حفظ التعديلات أو الحذف
-      document
-        .querySelector("#agentsTable")
-        .addEventListener("click", async (e) => {
-          const agentId = e.target.getAttribute("data-id");
-          const alertBox = document.getElementById("editAgentsAlert");
-          alertBox.style.display = "none";
+      window.saveAgent = async (id) => {
+        const nameInput = document.getElementById(`name-${id}`);
+        const roleSelect = document.getElementById(`role-${id}`);
+        const name = nameInput ? nameInput.value.trim() : "";
+        const role = roleSelect ? roleSelect.value : "";
 
-          // حفظ التعديلات
-          if (e.target.classList.contains("saveAgentBtn")) {
-            const row = e.target.closest("tr");
-            const inputs = row.querySelectorAll("[data-field]");
-            const updatedData = {};
-            inputs.forEach((input) => {
-              const field = input.getAttribute("data-field");
-              updatedData[field] = input.value.trim();
-            });
+        if (!name) {
+          alert("❌ الاسم لا يمكن أن يكون فارغًا");
+          return;
+        }
 
-            if (!updatedData.name || !updatedData.email || !updatedData.role) {
-              alertBox.textContent = "❌ يرجى تعبئة جميع الحقول";
-              alertBox.className = "alert error";
-              alertBox.style.display = "block";
-              return;
-            }
+        const { error } = await supabase
+          .from("agents")
+          .update({ name, role })
+          .eq("id", id);
 
-            const { error } = await supabase
-              .from("agents")
-              .update(updatedData)
-              .eq("id", agentId);
-            if (error) {
-              alertBox.textContent = "❌ حدث خطأ أثناء الحفظ: " + error.message;
-              alertBox.className = "alert error";
-            } else {
-              alertBox.textContent = "✅ تم حفظ التعديلات بنجاح";
-              alertBox.className = "alert success";
-            }
-            alertBox.style.display = "block";
-            setTimeout(() => (alertBox.style.display = "none"), 3000);
-            await loadAgentsForEdit();
-          }
+        if (error) {
+          alert("فشل التحديث: " + error.message);
+        } else {
+          alert("✅ تم الحفظ بنجاح");
+          await loadAgents();
+        }
+      };
 
-          // حذف المندوب
-          if (e.target.classList.contains("deleteAgentBtn")) {
-            if (confirm("⚠️ هل تريد حذف هذا المندوب؟")) {
-              const { error } = await supabase
-                .from("agents")
-                .delete()
-                .eq("id", agentId);
-              if (error) {
-                alertBox.textContent =
-                  "❌ حدث خطأ أثناء الحذف: " + error.message;
-                alertBox.className = "alert error";
-              } else {
-                alertBox.textContent = "✅ تم حذف المندوب بنجاح";
-                alertBox.className = "alert success";
-              }
-              alertBox.style.display = "block";
-              setTimeout(() => (alertBox.style.display = "none"), 3000);
-              await loadAgentsForEdit();
-            }
-          }
+      async function addAgent() {
+        const name = document.getElementById("newName").value.trim();
+        const email = document.getElementById("newEmail").value.trim();
+        const password = document.getElementById("newPassword").value.trim();
+        const role = document.getElementById("newRole").value;
+
+        const { data: authData, error: authError } = await supabase.auth.signUp(
+          { email, password }
+        );
+        if (authError) return alert("فشل التسجيل: " + authError.message);
+
+        await supabase.from("agents").insert({
+          name,
+          email,
+          role,
+          auth_user_id: authData.user.id,
+          created_at: new Date(),
         });
 
-      // تحميل البيانات عند فتح الصفحة
-      window.addEventListener("load", loadAgentsForEdit);
+        loadAgents();
+        document.querySelectorAll("input").forEach((i) => (i.value = ""));
+        document.getElementById("newRole").value = "agent";
+      }
+
+      async function deleteAgent(id) {
+        if (!confirm("هل أنت متأكد من الحذف؟")) return;
+        await supabase.from("agents").delete().eq("id", id);
+        loadAgents();
+      }
+
+      window.deleteAgent = deleteAgent;
+      window.addAgent = addAgent;
+
+      window.exportToExcel = () => {
+        const data = agents.map(({ name, email, role, last_login }) => ({
+          الاسم: name || "",
+          البريد: email,
+          الدور: role,
+          "آخر دخول": last_login
+            ? new Date(last_login).toLocaleString()
+            : "لم يسجل",
+        }));
+        const ws = XLSX.utils.json_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Agents");
+        XLSX.writeFile(wb, "agents.xlsx");
+      };
+
+      loadAgents();
     </script>
   </body>
 </html>
